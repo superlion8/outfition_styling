@@ -26,6 +26,7 @@ interface ZoneCardProps {
   onClearCategory: (category: Category) => void;
   onUploadItems: (files: FileList | null, category: Category) => void;
   isCompact?: boolean;
+  onImageClick?: (url: string) => void;
 }
 
 const ZoneCard: React.FC<ZoneCardProps> = ({
@@ -38,7 +39,8 @@ const ZoneCard: React.FC<ZoneCardProps> = ({
   onDeleteItem,
   onClearCategory,
   onUploadItems,
-  isCompact = false
+  isCompact = false,
+  onImageClick
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -146,7 +148,8 @@ const ZoneCard: React.FC<ZoneCardProps> = ({
               key={item.id}
               draggable
               onDragStart={(e) => handleItemDragStart(e, item)}
-              className="relative aspect-square rounded-lg bg-cover bg-center border border-border-dark overflow-hidden group/item cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors"
+              onClick={() => onImageClick && onImageClick(item.imageUrl)}
+              className="relative aspect-square rounded-lg bg-cover bg-center border border-border-dark overflow-hidden group/item cursor-pointer active:cursor-grabbing hover:border-primary/50 transition-colors"
               style={{ backgroundImage: `url('${item.imageUrl}')` }}
             >
               <div className="absolute top-1 left-1 bg-black/60 backdrop-blur-sm text-white text-[10px] font-mono px-1.5 py-0.5 rounded-full z-10 pointer-events-none">
@@ -182,8 +185,9 @@ const TabsView: React.FC<{
   items: WardrobeItem[],
   activeTab: Category,
   setActiveTab: (c: Category) => void,
-  config: any
-}> = ({ items, activeTab, setActiveTab, config }) => {
+  config: any,
+  onImageClick: (url: string) => void
+}> = ({ items, activeTab, setActiveTab, config, onImageClick }) => {
 
   const categories: { id: Category, label: string, icon: any }[] = [
     { id: 'tops', label: 'Tops', icon: <Shirt className="w-3 h-3" /> },
@@ -222,6 +226,7 @@ const TabsView: React.FC<{
           onClearCategory={config.onClearCategory}
           onUploadItems={config.onUploadItems}
           isCompact={true}
+          onImageClick={onImageClick}
         />
       </div>
     </>
@@ -244,6 +249,7 @@ export const StyleCanvas: React.FC<StyleCanvasProps & { isSidebar?: boolean }> =
   const getItemsByCategory = (cat: Category) => items.filter(i => i.category === cat);
   const [inputValue, setInputValue] = useState(String(outfitCount));
   const [activeTab, setActiveTab] = useState<Category>('tops');
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Sync input value when outfitCount changes from outside (e.g., +/- buttons)
   React.useEffect(() => {
@@ -337,6 +343,7 @@ export const StyleCanvas: React.FC<StyleCanvasProps & { isSidebar?: boolean }> =
             config={{
               onMoveItem, onDeleteItem, onClearCategory, onUploadItems
             }}
+            onImageClick={setPreviewImage}
           />
         </div>
       ) : (
@@ -352,6 +359,7 @@ export const StyleCanvas: React.FC<StyleCanvasProps & { isSidebar?: boolean }> =
             onDeleteItem={onDeleteItem}
             onClearCategory={onClearCategory}
             onUploadItems={onUploadItems}
+            onImageClick={setPreviewImage}
           />
           <ZoneCard
             title="Bottoms"
@@ -363,6 +371,7 @@ export const StyleCanvas: React.FC<StyleCanvasProps & { isSidebar?: boolean }> =
             onDeleteItem={onDeleteItem}
             onClearCategory={onClearCategory}
             onUploadItems={onUploadItems}
+            onImageClick={setPreviewImage}
           />
           <ZoneCard
             title="One-Piece"
@@ -374,6 +383,7 @@ export const StyleCanvas: React.FC<StyleCanvasProps & { isSidebar?: boolean }> =
             onDeleteItem={onDeleteItem}
             onClearCategory={onClearCategory}
             onUploadItems={onUploadItems}
+            onImageClick={setPreviewImage}
           />
           <ZoneCard
             title="Accessories"
@@ -385,7 +395,26 @@ export const StyleCanvas: React.FC<StyleCanvasProps & { isSidebar?: boolean }> =
             onDeleteItem={onDeleteItem}
             onClearCategory={onClearCategory}
             onUploadItems={onUploadItems}
+            onImageClick={setPreviewImage}
           />
+        </div>
+      )}
+
+      {/* Lightbox Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md animate-in fade-in duration-300"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button
+            className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+            onClick={() => setPreviewImage(null)}
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <div className="relative max-w-[90vw] max-h-[90vh] rounded-lg overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <img src={previewImage} alt="Preview" className="w-full h-full object-contain max-h-[90vh]" />
+          </div>
         </div>
       )}
     </div>
