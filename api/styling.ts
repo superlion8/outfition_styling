@@ -264,10 +264,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             text: `
 
 **搭配要求：**
-1. 每组搭配至少包含：(1件上装 + 1件下装) 或 (1件连体装)
-2. 可以选择性添加配饰
-3. 注意颜色搭配和风格统一
-4. 尽量避免重复使用同一单品（除非数量不足）
+1. 必须生成 **${outfit_count}** 组搭配，如果单品数量不足，**请重复使用单品**。
+2. 每组搭配必须有效：(1件上装 + 1件下装) 或 (1件连体装)
+3. 严禁生成空对象 {}。
+4. 优先考虑颜色协调和风格统一。
 
 **输出格式：**
 请严格以 JSON 格式输出，不要包含任何其他文字说明：
@@ -366,7 +366,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 }
             }
 
-            outfitResults.push(result);
+            // FILTER: Only add valid outfits (Must have Top+Bottom OR Onepiece)
+            const hasTopBottom = !!result.top && !!result.bottom;
+            const hasOnepiece = !!result.onepiece;
+
+            if (hasTopBottom || hasOnepiece) {
+                outfitResults.push(result);
+            }
         }
 
         // Return results
