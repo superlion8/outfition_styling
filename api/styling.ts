@@ -82,6 +82,7 @@ interface VLMOutfitResponse {
     bottom_index?: number;
     onepiece_index?: number;
     accessory_index?: number;
+    reason?: string;
 }
 
 // Initialize Supabase with service role key (server-side)

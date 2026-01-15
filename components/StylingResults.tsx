@@ -15,6 +15,7 @@ interface GeneratedOutfit {
   bottom?: OutfitItem;
   onepiece?: OutfitItem;
   accessory?: OutfitItem;
+  reason?: string;
 }
 
 interface StylingResultsProps {
@@ -118,6 +119,7 @@ interface OutfitState {
   accessories?: string;
   generatedImage?: string;
   isGenerating: boolean;
+  reason?: string;
 }
 
 export const StylingResults: React.FC<StylingResultsProps> = ({
@@ -153,7 +155,8 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
         bottoms: outfit.bottom?.image_url,
         accessories: outfit.accessory?.image_url,
         generatedImage: undefined,
-        isGenerating: false
+        isGenerating: false,
+        reason: outfit.reason
       }));
       setOutfits(mappedOutfits);
     } else {
@@ -368,6 +371,24 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Row: Reason */}
+              <div style={gridStyle} className="mb-2 items-start group/row">
+                <div className="text-right text-text-muted text-[10px] font-bold uppercase tracking-widest pt-1 pointer-events-none select-none">AI Insight</div>
+                {outfits.map((outfit, i) => (
+                  <div key={`reason-${i}`} className="px-1">
+                    {outfit.reason ? (
+                      <div className="bg-primary/5 border border-primary/20 rounded-md p-2 min-h-[40px] flex items-center">
+                        <p className="text-primary text-[10px] leading-tight font-medium">
+                          {outfit.reason}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="min-h-[40px]"></div>
+                    )}
                   </div>
                 ))}
               </div>

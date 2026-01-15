@@ -55,16 +55,20 @@ export const STYLING_ANALYSIS = {
     {
       "top_index": 1,
       "bottom_index": 2,
-      "accessory_index": 1
+      "accessory_index": 1,
+      "reason": "撞色搭配，充满活力"
     },
     {
       "onepiece_index": 1,
-      "accessory_index": 2
+      "accessory_index": 2,
+      "reason": "简约优雅，适合通勤"
     }
   ]
 }
 
-注意：index 对应上面图片的编号 (#1, #2, ...)。如果某类单品不使用，则不包含该字段。`,
+注意：
+1. index 对应上面图片的编号 (#1, #2, ...)。如果某类单品不使用，则不包含该字段。
+2. reason 字段必须使用中文，简要描述搭配理由（20字以内）。`,
 
     /**
      * 期望的响应格式
