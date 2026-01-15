@@ -32,26 +32,20 @@ const CanvasItemNode: React.FC<NodeProps<Node<CanvasItemData>>> = ({ data, selec
     return (
         <div
             className={`
-        relative bg-white rounded-xl overflow-hidden border-2 transition-all duration-200 shadow-xl
-        ${selected ? 'border-primary ring-4 ring-primary/30 scale-105' : 'border-transparent hover:border-primary/50'}
-      `}
-            style={{ width: 100, height: 130 }}
+                relative bg-card-dark rounded-lg overflow-hidden border transition-all duration-200 shadow-lg
+                ${selected ? 'border-primary ring-2 ring-primary/40' : 'border-border-dark hover:border-primary/50'}
+            `}
+            style={{ width: 80, height: 100 }}
         >
             <img
                 src={data.imageUrl}
                 alt={data.label}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain bg-white/5"
                 draggable={false}
             />
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                <span className="text-white text-xs font-medium truncate block">{data.label}</span>
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-1 py-0.5">
+                <span className="text-white text-[9px] font-medium truncate block">{data.label}</span>
             </div>
-            {/* Selection indicator */}
-            {selected && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full" />
-                </div>
-            )}
         </div>
     );
 };
