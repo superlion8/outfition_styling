@@ -146,7 +146,7 @@ function App() {
           {currentView === AppView.RESULTS && (
             <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-100px)] items-start">
               {/* Sidebar - StyleCanvas */}
-              <aside className="w-full lg:w-[320px] shrink-0 overflow-hidden border-r border-white/5 pr-4 flex flex-col h-full bg-background-light/30 backdrop-blur-sm rounded-xl border border-white/5 max-h-full">
+              <aside className="w-full lg:w-[320px] shrink-0 overflow-hidden border-r border-white/5 pr-4 flex flex-col h-full rounded-xl border border-white/5 max-h-full">
                 <StyleCanvas
                   items={items}
                   onMoveItem={handleMoveItem}

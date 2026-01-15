@@ -177,6 +177,57 @@ const ZoneCard: React.FC<ZoneCardProps> = ({
   );
 };
 
+// Helper Component for Sidebar Tabs
+const TabsView: React.FC<{
+  items: WardrobeItem[],
+  activeTab: Category,
+  setActiveTab: (c: Category) => void,
+  config: any
+}> = ({ items, activeTab, setActiveTab, config }) => {
+
+  const categories: { id: Category, label: string, icon: any }[] = [
+    { id: 'tops', label: 'Tops', icon: <Shirt className="w-3 h-3" /> },
+    { id: 'bottoms', label: 'Bottoms', icon: <FolderOpen className="w-3 h-3" /> },
+    { id: 'onepiece', label: 'One-Piece', icon: <CheckCircle2 className="w-3 h-3" /> },
+    { id: 'accessories', label: 'Accessories', icon: <ShoppingBag className="w-3 h-3" /> },
+  ];
+
+  const getItems = (cat: Category) => items.filter(i => i.category === cat);
+  const currentItems = getItems(activeTab);
+  const currentCat = categories.find(c => c.id === activeTab)!;
+
+  return (
+    <>
+      <div className="flex gap-2 p-2 overflow-x-auto no-scrollbar shrink-0 border-b border-white/5">
+        {categories.map(cat => (
+          <button
+            key={cat.id}
+            onClick={() => setActiveTab(cat.id)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${activeTab === cat.id ? 'bg-primary text-background-dark' : 'bg-white/5 text-text-muted hover:bg-white/10'}`}
+          >
+            {cat.icon}
+            {cat.label}
+          </button>
+        ))}
+      </div>
+      <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
+        <ZoneCard
+          title={currentCat.label}
+          category={currentCat.id}
+          items={currentItems}
+          icon={React.cloneElement(currentCat.icon as React.ReactElement, { className: "text-primary" })}
+          itemCount={currentItems.length}
+          onMoveItem={config.onMoveItem}
+          onDeleteItem={config.onDeleteItem}
+          onClearCategory={config.onClearCategory}
+          onUploadItems={config.onUploadItems}
+          isCompact={true}
+        />
+      </div>
+    </>
+  );
+};
+
 export const StyleCanvas: React.FC<StyleCanvasProps & { isSidebar?: boolean }> = ({
   items,
   onMoveItem,
@@ -192,6 +243,7 @@ export const StyleCanvas: React.FC<StyleCanvasProps & { isSidebar?: boolean }> =
 }) => {
   const getItemsByCategory = (cat: Category) => items.filter(i => i.category === cat);
   const [inputValue, setInputValue] = useState(String(outfitCount));
+  const [activeTab, setActiveTab] = useState<Category>('tops');
 
   // Sync input value when outfitCount changes from outside (e.g., +/- buttons)
   React.useEffect(() => {
@@ -229,101 +281,62 @@ export const StyleCanvas: React.FC<StyleCanvasProps & { isSidebar?: boolean }> =
       )}
 
       {/* Page Heading */}
-      <div className="flex flex-wrap justify-between items-end gap-3 pb-8">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-white text-3xl md:text-4xl font-black leading-tight tracking-[-0.033em]">Style Canvas</h1>
-          <p className="text-text-muted text-lg font-normal">Arrange your collection into zones to generate AI-coordinated luxury outfits.</p>
-        </div>
-
-        {/* Floating Style Control */}
-        <div className="flex items-center gap-4 bg-card-dark p-4 rounded-xl border border-border-dark shadow-2xl">
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase tracking-widest text-text-muted font-bold">Number of Outfits</label>
-            <div className="flex items-center bg-background-dark border border-border-dark rounded-lg p-1">
-              <button
-                onClick={decrement}
-                className="size-8 flex items-center justify-center text-white hover:text-primary transition-colors"
-              >
-                <span className="text-lg">-</span>
-              </button>
-              <input
-                type="number"
-                min="1"
-                max="100"
-                value={inputValue}
-                onChange={handleInputChange}
-                onBlur={handleInputBlur}
-                className="w-12 text-center text-white font-bold text-sm bg-transparent border-none outline-none focus:ring-1 focus:ring-primary rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-              <button
-                onClick={increment}
-                className="size-8 flex items-center justify-center text-white hover:text-primary transition-colors"
-              >
-                <span className="text-lg">+</span>
-              </button>
-            </div>
+      {!isSidebar && (
+        <div className="flex flex-wrap justify-between items-end gap-3 pb-8">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-white text-3xl md:text-4xl font-black leading-tight tracking-[-0.033em]">Style Canvas</h1>
+            <p className="text-text-muted text-lg font-normal">Arrange your collection into zones to generate AI-coordinated luxury outfits.</p>
           </div>
-          <button
-            onClick={onStartStyling}
-            className="h-12 px-6 md:px-8 bg-primary hover:bg-primary-hover text-background-dark rounded-lg font-bold flex items-center gap-2 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <Wand2 className="w-5 h-5" />
-            Start Styling
-          </button>
+
+          {/* Floating Style Control */}
+          <div className="flex items-center gap-4 bg-card-dark p-4 rounded-xl border border-border-dark shadow-2xl">
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] uppercase tracking-widest text-text-muted font-bold">Number of Outfits</label>
+              <div className="flex items-center bg-background-dark border border-border-dark rounded-lg p-1">
+                <button
+                  onClick={decrement}
+                  className="size-8 flex items-center justify-center text-white hover:text-primary transition-colors"
+                >
+                  <span className="text-lg">-</span>
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={inputValue}
+                  onChange={handleInputChange}
+                  onBlur={handleInputBlur}
+                  className="w-12 text-center text-white font-bold text-sm bg-transparent border-none outline-none focus:ring-1 focus:ring-primary rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <button
+                  onClick={increment}
+                  className="size-8 flex items-center justify-center text-white hover:text-primary transition-colors"
+                >
+                  <span className="text-lg">+</span>
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={onStartStyling}
+              className="h-12 px-6 md:px-8 bg-primary hover:bg-primary-hover text-background-dark rounded-lg font-bold flex items-center gap-2 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <Wand2 className="w-5 h-5" />
+              Start Styling
+            </button>
+          </div>
         </div>
-      </div>
+      )}
       {/* Toggle View for Sidebar vs Canvas */}
       {isSidebar ? (
-        /* Sidebar View */
-        <div className="flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar flex-1 pb-10">
-          <h3 className="text-lg font-bold text-white px-2 sticky top-0 bg-background-light dark:bg-background-dark z-10 py-2">Wardrobe Items</h3>
-          <ZoneCard
-            title="Tops"
-            category="tops"
-            items={getItemsByCategory('tops')}
-            icon={<Shirt className="text-primary w-4 h-4" />}
-            itemCount={getItemsByCategory('tops').length}
-            onMoveItem={onMoveItem}
-            onDeleteItem={onDeleteItem}
-            onClearCategory={onClearCategory}
-            onUploadItems={onUploadItems}
-            isCompact={true}
-          />
-          <ZoneCard
-            title="Bottoms"
-            category="bottoms"
-            items={getItemsByCategory('bottoms')}
-            icon={<FolderOpen className="text-primary w-4 h-4" />}
-            itemCount={getItemsByCategory('bottoms').length}
-            onMoveItem={onMoveItem}
-            onDeleteItem={onDeleteItem}
-            onClearCategory={onClearCategory}
-            onUploadItems={onUploadItems}
-            isCompact={true}
-          />
-          <ZoneCard
-            title="One-Piece"
-            category="onepiece"
-            items={getItemsByCategory('onepiece')}
-            icon={<CheckCircle2 className="text-primary w-4 h-4" />}
-            itemCount={getItemsByCategory('onepiece').length}
-            onMoveItem={onMoveItem}
-            onDeleteItem={onDeleteItem}
-            onClearCategory={onClearCategory}
-            onUploadItems={onUploadItems}
-            isCompact={true}
-          />
-          <ZoneCard
-            title="Accessories"
-            category="accessories"
-            items={getItemsByCategory('accessories')}
-            icon={<ShoppingBag className="text-primary w-4 h-4" />}
-            itemCount={getItemsByCategory('accessories').length}
-            onMoveItem={onMoveItem}
-            onDeleteItem={onDeleteItem}
-            onClearCategory={onClearCategory}
-            onUploadItems={onUploadItems}
-            isCompact={true}
+        /* Sidebar View with Tabs */
+        <div className="flex flex-col h-full gap-4 pb-0">
+          <TabsView
+            items={items}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            config={{
+              onMoveItem, onDeleteItem, onClearCategory, onUploadItems
+            }}
           />
         </div>
       ) : (
