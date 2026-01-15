@@ -204,7 +204,7 @@ export const ScannerOverlay: React.FC<ScannerOverlayProps> = ({ onConfirm, onCan
                 {isProcessing ? (
                   <>
                     <div className="w-4 h-4 border-2 border-background-dark border-t-transparent rounded-full animate-spin" />
-                    Processing...
+                    Capturing...
                   </>
                 ) : (
                   <>
