@@ -233,11 +233,13 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
         accessory?: ReturnType<typeof mapToOutfitItem>;
         onepiece?: ReturnType<typeof mapToOutfitItem>;
         model_image_url?: string;
+        model_description?: string;
       } = {
         top: mapToOutfitItem(topItem),
         bottom: mapToOutfitItem(bottomItem),
         accessory: mapToOutfitItem(accessoryItem),
-        model_image_url: currentModel.image // Updated field name
+        model_image_url: currentModel.image,
+        model_description: currentModel.model_desc
       };
 
       // Correction: If the item in 'tops' slot is actually a 'onepiece', put it in onepiece field

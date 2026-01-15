@@ -162,7 +162,7 @@ function App() {
               </aside>
 
               {/* Main Content - Results */}
-              <div className="flex-1 overflow-y-auto pl-2 h-full custom-scrollbar">
+              <div className="flex-1 overflow-y-auto pl-2 h-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <StylingResults
                   items={items}
                   onRegenerate={startScanning}

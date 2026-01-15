@@ -130,15 +130,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 **Model Description:**
 ${model_description || 'A professional fashion model with natural makeup and confident pose.'}
 
-**Outfit to wear:**
-The model is wearing the clothing items provided in the images.
-Please ensure the generated image accurately reflects the visual details, colors, and textures of the provided clothing items.
-Integrate these items into a cohesive, stylish outfit.
+**CRITICAL INSTRUCTION - OUTFIT TO WEAR:**
+The model MUST be wearing the clothing items provided in the images.
+Replace the model's original clothes with the provided items.
+- If a Top and Bottom are provided, the model must wear both.
+- If a One-Piece is provided, the model must wear it.
+- Keep the model's physical characteristics (face, hair, body type) from the reference image, but CHANGE THE CLOTHES.
+- Ensure the lighting and texture of the new clothes look realistic and natural on the model.
 
 **Style Requirements:**
 - Full body shot, studio lighting
 - Clean white or neutral background
-- Natural standing pose
+- Natural standing pose or walking pose
 - Professional e-commerce photography style
 - High quality, sharp details
 `;
@@ -173,7 +176,7 @@ Integrate these items into a cohesive, stylish outfit.
         const generationConfig = {
             responseModalities: ["IMAGE"], // Force image generation
             imageConfig: {
-                aspectRatio: '9:16',
+                aspectRatio: '3:4',
                 numberOfImages: 1
             }
         };

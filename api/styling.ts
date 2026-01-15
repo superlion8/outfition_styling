@@ -317,11 +317,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     {
       "top_index": 1,
       "bottom_index": 2,
-      "accessory_index": 1
+      "accessory_index": 1,
+      "reason": "这套搭配采用了...（请用中文简要说明搭配理由）"
     },
     {
       "onepiece_index": 1,
-      "accessory_index": 2
+      "accessory_index": 2,
+      "reason": "连体装搭配...（中文理由）"
     }
   ]
 }

@@ -110,7 +110,8 @@ export function useStyling(): UseStylingReturn {
                         image_path: item.image_path,
                         category: item.category
                     })),
-                    model_image_url: (outfit as any).model_image_url
+                    model_image_url: (outfit as any).model_image_url,
+                    model_description: (outfit as any).model_description
                 })
             });
 
