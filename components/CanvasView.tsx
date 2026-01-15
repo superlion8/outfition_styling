@@ -11,6 +11,7 @@ import {
     useReactFlow,
     Node,
     NodeProps,
+    NodeResizer,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import imageCompression from 'browser-image-compression';
@@ -70,9 +71,36 @@ const WhiteboardNode: React.FC<NodeProps<Node<WhiteboardData>>> = ({ data, selec
     );
 };
 
+// Resizable Image Node (for inside whiteboard - Figma-like)
+interface ResizableImageData {
+    imageUrl: string;
+    [key: string]: unknown;
+}
+
+const ResizableImageNode: React.FC<NodeProps<Node<ResizableImageData>>> = ({ data, selected }) => {
+    return (
+        <>
+            <NodeResizer
+                isVisible={selected}
+                minWidth={30}
+                minHeight={30}
+                handleStyle={{ width: 8, height: 8, borderRadius: 2 }}
+            />
+            <img
+                src={data.imageUrl}
+                alt=""
+                className="w-full h-full object-contain"
+                draggable={false}
+                style={{ pointerEvents: 'none' }}
+            />
+        </>
+    );
+};
+
 const nodeTypes = {
     canvasItem: CanvasItemNode,
     whiteboard: WhiteboardNode,
+    resizableImage: ResizableImageNode,
 };
 
 interface CanvasViewProps {
@@ -198,6 +226,55 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
     const onSelectionChange = useCallback(({ nodes: selectedNds }: { nodes: Node[] }) => {
         setSelectedNodes(selectedNds.map(n => n.id));
     }, []);
+
+    // Handle node drag stop - detect if dropped on whiteboard
+    const handleNodeDragStop = useCallback((_event: React.MouseEvent, node: Node) => {
+        // Only process canvasItem nodes (thumbnails)
+        if (node.type !== 'canvasItem') return;
+
+        // Find whiteboards
+        const whiteboards = nodes.filter(n => n.type === 'whiteboard');
+
+        for (const wb of whiteboards) {
+            const wbWidth = 300;
+            const wbHeight = 400;
+
+            // Check if node center is within whiteboard bounds
+            const nodeCenter = {
+                x: node.position.x + 20, // half of 40px width
+                y: node.position.y + 25, // half of 50px height
+            };
+
+            if (
+                nodeCenter.x >= wb.position.x &&
+                nodeCenter.x <= wb.position.x + wbWidth &&
+                nodeCenter.y >= wb.position.y &&
+                nodeCenter.y <= wb.position.y + wbHeight
+            ) {
+                // Convert to resizable image inside whiteboard
+                const imageData = node.data as CanvasItemData;
+                setNodes((nds) => {
+                    // Remove old node
+                    const filtered = nds.filter(n => n.id !== node.id);
+                    // Add new resizable image as child of whiteboard
+                    const newNode: Node<ResizableImageData> = {
+                        id: `resizable-${Date.now()}`,
+                        type: 'resizableImage',
+                        position: {
+                            x: nodeCenter.x - wb.position.x - 40,
+                            y: nodeCenter.y - wb.position.y - 40,
+                        },
+                        data: { imageUrl: imageData.imageUrl },
+                        parentId: wb.id,
+                        extent: 'parent',
+                        style: { width: 80, height: 100 },
+                    };
+                    return [...filtered, newNode];
+                });
+                break;
+            }
+        }
+    }, [nodes, setNodes]);
 
     // Group wardrobe items by category
     const categorizedItems = useMemo(() => {
@@ -338,6 +415,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
                     onSelectionChange={onSelectionChange}
+                    onNodeDragStop={handleNodeDragStop}
                     nodeTypes={nodeTypes}
                     fitView
                     panOnScroll
