@@ -35,7 +35,7 @@ const CanvasItemNode: React.FC<NodeProps<Node<CanvasItemData>>> = ({ data, selec
         relative bg-white rounded-xl overflow-hidden border-2 transition-all duration-200 shadow-xl
         ${selected ? 'border-primary ring-4 ring-primary/30 scale-105' : 'border-transparent hover:border-primary/50'}
       `}
-            style={{ width: 140, height: 180 }}
+            style={{ width: 100, height: 130 }}
         >
             <img
                 src={data.imageUrl}
@@ -153,9 +153,35 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         });
         return grouped;
     }, [wardrobeItems]);
+    // Handle drag and drop files onto canvas
+    const handleCanvasDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        const files = e.dataTransfer.files;
+        if (!files || files.length === 0) return;
+
+        Array.from(files).forEach((file) => {
+            if (!file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                if (event.target?.result) {
+                    handleAddItem(event.target.result as string, file.name, 'upload');
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }, [handleAddItem]);
+
+    const handleCanvasDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+    }, []);
 
     return (
-        <div className="h-screen w-full flex flex-col bg-background-dark">
+        <div
+            className="h-screen w-full flex flex-col bg-background-dark"
+            onDrop={handleCanvasDrop}
+            onDragOver={handleCanvasDragOver}
+        >
             {/* Hidden file input */}
             <input
                 type="file"
