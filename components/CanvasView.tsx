@@ -201,6 +201,15 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 {/* Right - Actions */}
                 <div className="flex items-center gap-2">
                     <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-bold text-sm flex items-center gap-2 transition-colors border border-border-dark"
+                        title="Import images from local files"
+                    >
+                        <Upload className="w-4 h-4" />
+                        Import
+                    </button>
+                    <div className="w-px h-6 bg-border-dark" />
+                    <button
                         onClick={handleDeleteSelected}
                         disabled={selectedNodes.length === 0}
                         className="p-2 text-text-muted hover:text-white hover:bg-white/10 rounded-lg transition-colors disabled:opacity-30"
