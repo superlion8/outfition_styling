@@ -297,9 +297,11 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                     onSelectionChange={onSelectionChange}
                     nodeTypes={nodeTypes}
                     fitView
-                    panOnScroll={activeTool === 'pan'}
-                    panOnDrag={activeTool === 'pan' ? true : [1, 2]}
-                    selectionOnDrag={activeTool === 'select'}
+                    panOnScroll
+                    panOnDrag={[1, 2]}
+                    selectionOnDrag
+                    selectionKeyCode="Meta"
+                    multiSelectionKeyCode="Shift"
                     className="bg-transparent"
                     proOptions={{ hideAttribution: true }}
                     minZoom={0.1}
