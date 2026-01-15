@@ -10,6 +10,7 @@ interface StyleCanvasProps {
   onStartStyling: () => void;
   outfitCount: number;
   setOutfitCount: (count: number) => void;
+  isLoading?: boolean;
 }
 
 interface ZoneCardProps {
@@ -23,19 +24,19 @@ interface ZoneCardProps {
   onUploadItems: (files: FileList | null, category: Category) => void;
 }
 
-const ZoneCard: React.FC<ZoneCardProps> = ({ 
-  title, 
-  category, 
-  items, 
-  icon, 
-  itemCount, 
+const ZoneCard: React.FC<ZoneCardProps> = ({
+  title,
+  category,
+  items,
+  icon,
+  itemCount,
   onMoveItem,
   onDeleteItem,
   onUploadItems
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const hasItems = items.length > 0;
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -78,19 +79,18 @@ const ZoneCard: React.FC<ZoneCardProps> = ({
   };
 
   return (
-    <div 
+    <div
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`bg-card-dark rounded-xl border p-6 flex flex-col gap-4 relative group h-full transition-colors duration-200 min-h-[400px] ${
-        isDragOver ? 'border-primary bg-primary/5 shadow-[0_0_15px_-3px_rgba(140,48,232,0.3)]' : 'border-border-dark'
-      }`}
+      className={`bg-card-dark rounded-xl border p-6 flex flex-col gap-4 relative group h-full transition-colors duration-200 min-h-[400px] ${isDragOver ? 'border-primary bg-primary/5 shadow-[0_0_15px_-3px_rgba(140,48,232,0.3)]' : 'border-border-dark'
+        }`}
     >
-      <input 
-        type="file" 
+      <input
+        type="file"
         ref={fileInputRef}
-        className="hidden" 
-        multiple 
+        className="hidden"
+        multiple
         accept="image/*"
         onChange={(e) => onUploadItems(e.target.files, category)}
       />
@@ -106,7 +106,7 @@ const ZoneCard: React.FC<ZoneCardProps> = ({
       </div>
 
       {!hasItems ? (
-        <div 
+        <div
           onClick={triggerUpload}
           className="flex-1 flex flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed border-[#473c53] hover:border-primary/50 transition-colors cursor-pointer min-h-[320px] group/empty"
         >
@@ -121,31 +121,31 @@ const ZoneCard: React.FC<ZoneCardProps> = ({
       ) : (
         <div className="flex-1 grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-3 content-start">
           {items.map((item) => (
-            <div 
-              key={item.id} 
+            <div
+              key={item.id}
               draggable
               onDragStart={(e) => handleItemDragStart(e, item)}
-              className="relative aspect-square rounded-lg bg-cover bg-center border border-border-dark overflow-hidden group/item cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors" 
+              className="relative aspect-square rounded-lg bg-cover bg-center border border-border-dark overflow-hidden group/item cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors"
               style={{ backgroundImage: `url('${item.imageUrl}')` }}
             >
-               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-start justify-end p-2 pointer-events-none">
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteItem(item.id);
-                    }}
-                    className="size-6 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600 transition-colors pointer-events-auto cursor-pointer"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-               </div>
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-start justify-end p-2 pointer-events-none">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteItem(item.id);
+                  }}
+                  className="size-6 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600 transition-colors pointer-events-auto cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
             </div>
           ))}
-          <div 
+          <div
             onClick={triggerUpload}
             className="flex items-center justify-center rounded-lg border-2 border-dashed border-[#473c53] hover:border-primary/50 cursor-pointer aspect-square transition-colors hover:bg-white/5"
           >
-             <Plus className="text-[#473c53]" />
+            <Plus className="text-[#473c53]" />
           </div>
         </div>
       )}
@@ -153,14 +153,15 @@ const ZoneCard: React.FC<ZoneCardProps> = ({
   );
 };
 
-export const StyleCanvas: React.FC<StyleCanvasProps> = ({ 
-  items, 
-  onMoveItem, 
+export const StyleCanvas: React.FC<StyleCanvasProps> = ({
+  items,
+  onMoveItem,
   onDeleteItem,
   onUploadItems,
-  onStartStyling, 
-  outfitCount, 
-  setOutfitCount 
+  onStartStyling,
+  outfitCount,
+  setOutfitCount,
+  isLoading = false
 }) => {
   const getItemsByCategory = (cat: Category) => items.filter(i => i.category === cat);
 
@@ -175,20 +176,20 @@ export const StyleCanvas: React.FC<StyleCanvasProps> = ({
           <h1 className="text-white text-3xl md:text-4xl font-black leading-tight tracking-[-0.033em]">Style Canvas</h1>
           <p className="text-text-muted text-lg font-normal">Arrange your collection into zones to generate AI-coordinated luxury outfits.</p>
         </div>
-        
+
         {/* Floating Style Control */}
         <div className="flex items-center gap-4 bg-card-dark p-4 rounded-xl border border-border-dark shadow-2xl">
           <div className="flex flex-col gap-1">
             <label className="text-[10px] uppercase tracking-widest text-text-muted font-bold">Number of Outfits</label>
             <div className="flex items-center bg-background-dark border border-border-dark rounded-lg p-1">
-              <button 
+              <button
                 onClick={decrement}
                 className="size-8 flex items-center justify-center text-white hover:text-primary transition-colors"
               >
                 <span className="text-lg">-</span>
               </button>
               <span className="w-10 text-center text-white font-bold text-sm">{outfitCount}</span>
-              <button 
+              <button
                 onClick={increment}
                 className="size-8 flex items-center justify-center text-white hover:text-primary transition-colors"
               >
@@ -196,7 +197,7 @@ export const StyleCanvas: React.FC<StyleCanvasProps> = ({
               </button>
             </div>
           </div>
-          <button 
+          <button
             onClick={onStartStyling}
             className="h-12 px-6 md:px-8 bg-primary hover:bg-primary-hover text-background-dark rounded-lg font-bold flex items-center gap-2 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
           >
@@ -208,41 +209,41 @@ export const StyleCanvas: React.FC<StyleCanvasProps> = ({
 
       {/* Styling Canvas Quadrants - Reverted to 2x2 Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[600px] mb-12">
-        <ZoneCard 
-          title="Tops" 
-          category="tops" 
-          items={getItemsByCategory('tops')} 
-          icon={<Shirt className="text-primary" />} 
+        <ZoneCard
+          title="Tops"
+          category="tops"
+          items={getItemsByCategory('tops')}
+          icon={<Shirt className="text-primary" />}
           itemCount={getItemsByCategory('tops').length}
           onMoveItem={onMoveItem}
           onDeleteItem={onDeleteItem}
           onUploadItems={onUploadItems}
         />
-        <ZoneCard 
-          title="Bottoms" 
-          category="bottoms" 
-          items={getItemsByCategory('bottoms')} 
-          icon={<FolderOpen className="text-primary" />} 
+        <ZoneCard
+          title="Bottoms"
+          category="bottoms"
+          items={getItemsByCategory('bottoms')}
+          icon={<FolderOpen className="text-primary" />}
           itemCount={getItemsByCategory('bottoms').length}
           onMoveItem={onMoveItem}
           onDeleteItem={onDeleteItem}
           onUploadItems={onUploadItems}
         />
-        <ZoneCard 
-          title="One-Piece" 
-          category="onepiece" 
-          items={getItemsByCategory('onepiece')} 
-          icon={<CheckCircle2 className="text-primary" />} 
+        <ZoneCard
+          title="One-Piece"
+          category="onepiece"
+          items={getItemsByCategory('onepiece')}
+          icon={<CheckCircle2 className="text-primary" />}
           itemCount={getItemsByCategory('onepiece').length}
           onMoveItem={onMoveItem}
           onDeleteItem={onDeleteItem}
           onUploadItems={onUploadItems}
         />
-        <ZoneCard 
-          title="Accessories" 
-          category="accessories" 
-          items={getItemsByCategory('accessories')} 
-          icon={<ShoppingBag className="text-primary" />} 
+        <ZoneCard
+          title="Accessories"
+          category="accessories"
+          items={getItemsByCategory('accessories')}
+          icon={<ShoppingBag className="text-primary" />}
           itemCount={getItemsByCategory('accessories').length}
           onMoveItem={onMoveItem}
           onDeleteItem={onDeleteItem}
