@@ -403,7 +403,7 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
                     onImageDrop={(url) => updateOutfit(i, 'tops', url)}
                     style={{ filter: i % 2 === 0 ? 'brightness(0.7) sepia(0.2)' : 'none' }}
                     label="Drop to swap"
-                    className="relative bg-background-dark border rounded-lg p-2 aspect-[4/3] flex items-center justify-center group/slot hover:border-primary hover:shadow-[0_0_15px_-3px_rgba(140,48,232,0.3)] transition-all cursor-grab active:cursor-grabbing"
+                    className="relative bg-background-dark border rounded-lg p-2 aspect-[9/16] flex items-center justify-center group/slot hover:border-primary hover:shadow-[0_0_15px_-3px_rgba(140,48,232,0.3)] transition-all cursor-grab active:cursor-grabbing"
                   />
                 ))}
               </div>
@@ -416,7 +416,7 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
                     key={`bottom-${i}`}
                     image={outfit.bottoms}
                     onImageDrop={(url) => updateOutfit(i, 'bottoms', url)}
-                    className="relative bg-background-dark border rounded-lg p-2 aspect-[4/3] flex items-center justify-center group/slot hover:border-primary hover:shadow-[0_0_15px_-3px_rgba(140,48,232,0.3)] transition-all cursor-grab active:cursor-grabbing"
+                    className="relative bg-background-dark border rounded-lg p-2 aspect-[9/16] flex items-center justify-center group/slot hover:border-primary hover:shadow-[0_0_15px_-3px_rgba(140,48,232,0.3)] transition-all cursor-grab active:cursor-grabbing"
                   />
                 ))}
               </div>
@@ -444,7 +444,7 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
                   <span className="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">AI Studio</span>
                 </div>
                 {outfits.map((outfit, i) => (
-                  <div key={`generate-${i}`} className="relative w-full aspect-[3/4] flex flex-col">
+                  <div key={`generate-${i}`} className="relative w-full aspect-[9/16] flex flex-col">
                     {outfit.generatedImage ? (
                       <div className="relative w-full h-full rounded-lg overflow-hidden border border-primary/30 group/result animate-in fade-in zoom-in-95 duration-500">
                         <img src={outfit.generatedImage} alt="Generated Look" className="w-full h-full object-cover" />
