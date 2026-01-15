@@ -289,7 +289,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
 
         // Call Gemini API via Vertex AI
-        const modelId = 'gemini-2.0-flash';
+        // Model config from lib/model_prompts.ts - STYLING_ANALYSIS.MODEL_ID
+        const modelId = 'gemini-3-flash-preview';
         const contents = [{ role: 'user', parts: promptParts }];
 
         const response = await callVertexAI(modelId, contents, {});

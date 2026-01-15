@@ -14,7 +14,7 @@ export const STYLING_ANALYSIS = {
      * - gemini-2.0-flash: 快速响应，适合实时分析
      * - gemini-2.0-pro: 更高质量，速度较慢
      */
-    MODEL_ID: 'gemini-2.0-flash',
+    MODEL_ID: 'gemini-3-flash-preview',
 
     /**
      * 系统指令 - 开头部分
@@ -89,7 +89,7 @@ export const LOOK_GENERATION = {
      * - gemini-2.0-flash: 支持图片生成
      * - imagen-3.0-generate-001: 专业图片生成模型
      */
-    MODEL_ID: 'gemini-2.0-flash', // 或 'imagen-3.0-generate-001'
+    MODEL_ID: 'gemini-3-pro-image-preview',
 
     /**
      * 生成穿搭效果图的 Prompt
@@ -123,45 +123,3 @@ ${outfitDescription}
         numberOfImages: 1,
     }
 };
-
-
-// ============================================================================
-// 3. 模特虚拟试穿 (Virtual Try-On) - 保留，后续可用
-// ============================================================================
-
-export const VIRTUAL_TRYON = {
-    /**
-     * 使用的模型
-     */
-    MODEL_ID: 'gemini-2.0-flash',
-
-    /**
-     * 虚拟试穿 Prompt
-     */
-    PROMPT_TEMPLATE: (clothingDescription: string) =>
-        `You are given a model image and a clothing item image. 
-Generate a new image showing the model wearing the clothing item.
-Keep the model's face, body proportions, and pose consistent.
-
-Clothing to apply: ${clothingDescription}
-
-Requirements:
-- Maintain model's identity and appearance
-- Natural clothing fit and drape
-- Consistent lighting with original model photo
-- High quality output
-`,
-};
-
-
-// ============================================================================
-// 导出汇总
-// ============================================================================
-
-export const MODEL_PROMPTS = {
-    STYLING_ANALYSIS,
-    LOOK_GENERATION,
-    VIRTUAL_TRYON,
-};
-
-export default MODEL_PROMPTS;
