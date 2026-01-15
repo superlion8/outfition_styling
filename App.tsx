@@ -15,6 +15,7 @@ function App() {
   const {
     items,
     isLoading: isLoadingWardrobe,
+    isUploading,
     error: wardrobeError,
     uploadItems,
     deleteItem,
@@ -108,6 +109,7 @@ function App() {
               outfitCount={outfitCount}
               setOutfitCount={setOutfitCount}
               isLoading={isLoadingWardrobe}
+              isUploading={isUploading}
             />
           )}
 

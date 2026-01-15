@@ -11,6 +11,7 @@ interface StyleCanvasProps {
   outfitCount: number;
   setOutfitCount: (count: number) => void;
   isLoading?: boolean;
+  isUploading?: boolean;
 }
 
 interface ZoneCardProps {
@@ -161,7 +162,8 @@ export const StyleCanvas: React.FC<StyleCanvasProps> = ({
   onStartStyling,
   outfitCount,
   setOutfitCount,
-  isLoading = false
+  isLoading = false,
+  isUploading = false
 }) => {
   const getItemsByCategory = (cat: Category) => items.filter(i => i.category === cat);
   const [inputValue, setInputValue] = useState(String(outfitCount));
@@ -189,7 +191,18 @@ export const StyleCanvas: React.FC<StyleCanvasProps> = ({
   };
 
   return (
-    <div className="animate-in fade-in duration-700">
+    <div className="animate-in fade-in duration-700 relative">
+      {/* Uploading Overlay */}
+      {isUploading && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-card-dark border border-border-dark rounded-xl p-8 flex flex-col items-center gap-4 shadow-2xl">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-white font-semibold text-lg">上传中...</p>
+            <p className="text-text-muted text-sm">请稍候，正在上传您的衣物图片</p>
+          </div>
+        </div>
+      )}
+
       {/* Page Heading */}
       <div className="flex flex-wrap justify-between items-end gap-3 pb-8">
         <div className="flex flex-col gap-2">

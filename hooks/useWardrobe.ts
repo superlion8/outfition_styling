@@ -5,6 +5,7 @@ import type { WardrobeItem } from '../types';
 interface UseWardrobeReturn {
     items: WardrobeItem[];
     isLoading: boolean;
+    isUploading: boolean;
     error: string | null;
     uploadItems: (files: FileList | null, category: Category) => Promise<void>;
     deleteItem: (itemId: string) => Promise<void>;
@@ -25,6 +26,7 @@ function toWardrobeItem(row: WardrobeItemRow): WardrobeItem {
 export function useWardrobe(): UseWardrobeReturn {
     const [items, setItems] = useState<WardrobeItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isUploading, setIsUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const userId = getUserId();
@@ -63,6 +65,7 @@ export function useWardrobe(): UseWardrobeReturn {
         if (!files || files.length === 0) return;
 
         setError(null);
+        setIsUploading(true);
 
         try {
             // Get current max order_index for this category
@@ -117,6 +120,8 @@ export function useWardrobe(): UseWardrobeReturn {
         } catch (e) {
             console.error('Failed to upload items:', e);
             setError(e instanceof Error ? e.message : 'Failed to upload items');
+        } finally {
+            setIsUploading(false);
         }
     }, [userId, refreshItems]);
 
@@ -197,6 +202,7 @@ export function useWardrobe(): UseWardrobeReturn {
     return {
         items,
         isLoading,
+        isUploading,
         error,
         uploadItems,
         deleteItem,
