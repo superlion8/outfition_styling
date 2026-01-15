@@ -27,8 +27,10 @@ function App() {
   const {
     outfits: generatedOutfits,
     isLoading: isGenerating,
+    isGeneratingLook,
     error: stylingError,
     generateOutfits,
+    generateLook,
     clearOutfits
   } = useStyling();
 
@@ -131,6 +133,8 @@ function App() {
                 onRegenerate={startScanning}
                 outfitCount={outfitCount}
                 generatedOutfits={generatedOutfits}
+                onGenerateLook={generateLook}
+                isGeneratingLook={isGeneratingLook}
               />
             </React.Fragment>
           )}

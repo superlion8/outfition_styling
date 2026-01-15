@@ -11,6 +11,8 @@ export interface WardrobeItem {
   id: string;
   category: Category;
   imageUrl: string;
+  image_path: string; // From Supabase
+  order_index: number; // From Supabase
   name: string;
 }
 

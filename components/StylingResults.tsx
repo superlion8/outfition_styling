@@ -22,6 +22,8 @@ interface StylingResultsProps {
   onRegenerate: () => void;
   outfitCount: number;
   generatedOutfits?: GeneratedOutfit[];
+  onGenerateLook?: (index: number, outfit: any) => Promise<string | null>;
+  isGeneratingLook?: boolean;
 }
 
 interface DropSlotProps {
@@ -117,7 +119,13 @@ interface OutfitState {
   isGenerating: boolean;
 }
 
-export const StylingResults: React.FC<StylingResultsProps> = ({ items, onRegenerate, outfitCount, generatedOutfits }) => {
+export const StylingResults: React.FC<StylingResultsProps> = ({
+  items,
+  onRegenerate,
+  outfitCount,
+  generatedOutfits,
+  onGenerateLook
+}) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -166,70 +174,69 @@ export const StylingResults: React.FC<StylingResultsProps> = ({ items, onRegener
     setOutfits(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleGenerateLook = async (index: number) => {
-    if (!process.env.API_KEY) {
-      alert("API Key is missing in environment variables.");
-      return;
-    }
+  // Helper to find full item details by image URL
+  const findItemByUrl = (url?: string): WardrobeItem | undefined => {
+    if (!url) return undefined;
+    return items.find(item => item.imageUrl === url);
+  };
 
-    const outfit = outfits[index];
+  const handleGenerateLook = async (index: number) => {
+    if (!onGenerateLook) return;
+
+    const currentOutfitState = outfits[index];
+
+    // Update loading state
     setOutfits(prev => prev.map((o, i) => i === index ? { ...o, isGenerating: true } : o));
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      // Reconstruct the Outfit object with full item details (needed for image_path)
+      // Note: The type expectation in generateLook might need to be adjusted or we cast here
+      // transforming WardrobeItem to OutfitItem structure if needed
+      const topItem = findItemByUrl(currentOutfitState.tops);
+      const bottomItem = findItemByUrl(currentOutfitState.bottoms);
+      const accessoryItem = findItemByUrl(currentOutfitState.accessories);
 
-      // Prepare prompt parts
-      const parts: any[] = [
-        { text: "Generate a high-fashion, photorealistic full-body studio photograph of the model provided in the first image. The model should be wearing the clothing items provided in the subsequent images. Ensure the fit is realistic, the lighting is professional studio quality, and the model is standing in a natural pose." },
-        { inlineData: { mimeType: 'image/jpeg', data: await urlToBase64(currentModel.imageUrl) } }
-      ];
+      // Construct an object compatible with what useStyling expects (Outfit interface)
+      // We need to map WardrobeItem to OutfitItem structure
+      const mapToOutfitItem = (item?: WardrobeItem) => {
+        if (!item) return undefined;
+        return {
+          id: item.id,
+          image_url: item.imageUrl,
+          image_path: item.image_path,
+          order_index: item.order_index,
+          category: item.category
+        };
+      };
 
-      if (outfit.tops) {
-        parts.push({ text: "Top garment:" });
-        parts.push({ inlineData: { mimeType: 'image/jpeg', data: await urlToBase64(outfit.tops) } });
+      const outfitData: {
+        top?: ReturnType<typeof mapToOutfitItem>;
+        bottom?: ReturnType<typeof mapToOutfitItem>;
+        accessory?: ReturnType<typeof mapToOutfitItem>;
+        onepiece?: ReturnType<typeof mapToOutfitItem>;
+      } = {
+        top: mapToOutfitItem(topItem),
+        bottom: mapToOutfitItem(bottomItem),
+        accessory: mapToOutfitItem(accessoryItem)
+      };
+
+      // Correction: If the item in 'tops' slot is actually a 'onepiece', put it in onepiece field
+      if (topItem && topItem.category === 'onepiece') {
+        outfitData.onepiece = outfitData.top;
+        outfitData.top = undefined;
       }
 
-      if (outfit.bottoms) {
-        parts.push({ text: "Bottom garment:" });
-        parts.push({ inlineData: { mimeType: 'image/jpeg', data: await urlToBase64(outfit.bottoms) } });
-      }
-
-      if (outfit.accessories) {
-        parts.push({ text: "Accessory:" });
-        parts.push({ inlineData: { mimeType: 'image/jpeg', data: await urlToBase64(outfit.accessories) } });
-      }
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-image-preview',
-        contents: { parts },
-        config: {
-          imageConfig: {
-            aspectRatio: "3:4",
-            imageSize: "1K"
-          }
-        }
-      });
-
-      let generatedImageUrl = undefined;
-      // Extract image from response
-      if (response.candidates?.[0]?.content?.parts) {
-        for (const part of response.candidates[0].content.parts) {
-          if (part.inlineData) {
-            generatedImageUrl = `data:image/png;base64,${part.inlineData.data}`;
-            break;
-          }
-        }
-      }
+      const generatedImageUrl = await onGenerateLook(index, outfitData);
 
       if (generatedImageUrl) {
         setOutfits(prev => prev.map((o, i) => i === index ? { ...o, isGenerating: false, generatedImage: generatedImageUrl } : o));
       } else {
-        throw new Error("No image data found in response");
+        throw new Error("No image generated");
       }
 
     } catch (error) {
       console.error("Generation failed:", error);
-      alert("Failed to generate image. Please check your connection and try again.");
+      // alert("Failed to generate image. Please check your connection and try again.");
       setOutfits(prev => prev.map((o, i) => i === index ? { ...o, isGenerating: false } : o));
     }
   };
