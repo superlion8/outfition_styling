@@ -356,6 +356,104 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         setStylingStep('config');
     }, [nodes, selectedNodes]);
 
+    // Generate styling via API and create whiteboards
+    const handleGenerateStyling = useCallback(async () => {
+        if (stylingItems.length < 2) return;
+
+        setStylingStep('generating');
+
+        try {
+            const response = await fetch('/api/canvas-styling', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    items: stylingItems.map(item => ({
+                        index: item.index,
+                        imageUrl: item.imageUrl,
+                    })),
+                    outfitCount: stylingOutfitCount,
+                    userPrompt: stylingPrompt || undefined,
+                }),
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'API request failed');
+            }
+
+            const result = await response.json();
+
+            if (!result.outfits || result.outfits.length === 0) {
+                throw new Error('No outfits generated');
+            }
+
+            // Create whiteboards for each outfit
+            const whiteboardWidth = 350;
+            const whiteboardHeight = 450;
+            const whiteboardGap = 50;
+            const startX = 400;
+            const startY = 0;
+
+            const newNodes: Node[] = [];
+
+            result.outfits.forEach((outfit: { selectedIndices: number[]; reason: string }, outfitIdx: number) => {
+                // Create whiteboard
+                const wbId = `styling-wb-${Date.now()}-${outfitIdx}`;
+                const wbX = startX + outfitIdx * (whiteboardWidth + whiteboardGap);
+
+                newNodes.push({
+                    id: wbId,
+                    type: 'whiteboard',
+                    position: { x: wbX, y: startY },
+                    data: { label: `Look ${outfitIdx + 1}` },
+                    style: { zIndex: -1, width: whiteboardWidth, height: whiteboardHeight },
+                });
+
+                // Add selected images to whiteboard
+                const imageWidth = 70;
+                const imageHeight = 90;
+                const cols = 3;
+                const gap = 10;
+                const offsetY = 40; // Below label
+
+                outfit.selectedIndices.forEach((idx, imgIdx) => {
+                    const item = stylingItems.find(i => i.index === idx);
+                    if (!item) return;
+
+                    const col = imgIdx % cols;
+                    const row = Math.floor(imgIdx / cols);
+
+                    newNodes.push({
+                        id: `styling-img-${Date.now()}-${outfitIdx}-${imgIdx}`,
+                        type: 'resizableImage',
+                        position: {
+                            x: 20 + col * (imageWidth + gap),
+                            y: offsetY + row * (imageHeight + gap),
+                        },
+                        data: { imageUrl: item.imageUrl },
+                        parentId: wbId,
+                        extent: 'parent',
+                        style: { width: imageWidth, height: imageHeight },
+                    });
+                });
+            });
+
+            // Add all new nodes
+            setNodes((nds) => [...nds, ...newNodes]);
+
+            // Reset styling state
+            setStylingStep('idle');
+            setStylingItems([]);
+            setStylingPrompt('');
+            setSelectedNodes([]);
+
+        } catch (error) {
+            console.error('Styling generation failed:', error);
+            alert(`Failed to generate outfits: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            setStylingStep('config');
+        }
+    }, [stylingItems, stylingOutfitCount, stylingPrompt, setNodes]);
+
     // Export canvas
     const handleExport = useCallback(async () => {
         if (!reactFlowWrapper.current) return;
@@ -665,12 +763,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                             </div>
 
                             <button
-                                onClick={() => {
-                                    setStylingStep('generating');
-                                    // TODO: Call API and process results
-                                    console.log('Generate styling with:', { items: stylingItems, outfitCount: stylingOutfitCount, prompt: stylingPrompt });
-                                    setTimeout(() => setStylingStep('idle'), 2000); // Placeholder
-                                }}
+                                onClick={handleGenerateStyling}
                                 className="w-full py-3 bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90 text-white rounded-lg font-bold flex items-center justify-center gap-2 transition-colors"
                             >
                                 <Sparkles className="w-4 h-4" />
