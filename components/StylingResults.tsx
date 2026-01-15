@@ -407,16 +407,15 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
               </div>
 
               {/* Row: Tops */}
-              <div style={gridStyle} className="mb-6 items-center group/row">
+              <div style={gridStyle} className="items-center group/row">
                 <div className="text-right text-white font-bold text-sm pointer-events-none select-none">Tops</div>
                 {outfits.map((outfit, i) => (
                   <DropSlot
                     key={`top-${i}`}
                     image={outfit.tops}
                     onImageDrop={(url) => updateOutfit(i, 'tops', url)}
-                    style={{ filter: i % 2 === 0 ? 'brightness(0.7) sepia(0.2)' : 'none' }}
                     label="Drop to swap"
-                    className="relative bg-background-dark border rounded-lg p-2 aspect-[4/3] flex items-center justify-center group/slot hover:border-primary hover:shadow-[0_0_15px_-3px_rgba(140,48,232,0.3)] transition-all cursor-grab active:cursor-grabbing"
+                    className="relative bg-background-dark aspect-[4/3] flex items-center justify-center group/slot hover:ring-2 hover:ring-primary hover:ring-inset transition-all cursor-grab active:cursor-grabbing rounded-t-lg overflow-hidden"
                   />
                 ))}
               </div>
@@ -429,7 +428,7 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
                     key={`bottom-${i}`}
                     image={outfit.bottoms}
                     onImageDrop={(url) => updateOutfit(i, 'bottoms', url)}
-                    className="relative bg-background-dark border rounded-lg p-2 aspect-[4/3] flex items-center justify-center group/slot hover:border-primary hover:shadow-[0_0_15px_-3px_rgba(140,48,232,0.3)] transition-all cursor-grab active:cursor-grabbing"
+                    className="relative bg-background-dark aspect-[4/3] flex items-center justify-center group/slot hover:ring-2 hover:ring-primary hover:ring-inset transition-all cursor-grab active:cursor-grabbing rounded-b-lg overflow-hidden"
                   />
                 ))}
               </div>
@@ -443,8 +442,7 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
                       key={`acc-${i}`}
                       image={outfit.accessories}
                       onImageDrop={(url) => updateOutfit(i, 'accessories', url)}
-                      style={{ filter: `hue-rotate(${i * 45}deg)` }}
-                      className="relative bg-background-dark border rounded-lg p-2 aspect-[4/3] flex items-center justify-center group/slot hover:border-primary hover:shadow-[0_0_15px_-3px_rgba(140,48,232,0.3)] transition-all cursor-grab active:cursor-grabbing"
+                      className="relative bg-background-dark aspect-square flex items-center justify-center group/slot hover:ring-2 hover:ring-primary hover:ring-inset transition-all cursor-grab active:cursor-grabbing rounded-lg overflow-hidden"
                     />
                   ))}
                 </div>
