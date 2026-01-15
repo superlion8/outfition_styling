@@ -165,8 +165,15 @@ export const StyleCanvas: React.FC<StyleCanvasProps> = ({
 }) => {
   const getItemsByCategory = (cat: Category) => items.filter(i => i.category === cat);
 
-  const increment = () => setOutfitCount(Math.min(outfitCount + 1, 10));
+  const increment = () => setOutfitCount(Math.min(outfitCount + 1, 100));
   const decrement = () => setOutfitCount(Math.max(outfitCount - 1, 1));
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    if (!isNaN(value)) {
+      setOutfitCount(Math.min(Math.max(value, 1), 100));
+    }
+  };
 
   return (
     <div className="animate-in fade-in duration-700">
@@ -188,7 +195,14 @@ export const StyleCanvas: React.FC<StyleCanvasProps> = ({
               >
                 <span className="text-lg">-</span>
               </button>
-              <span className="w-10 text-center text-white font-bold text-sm">{outfitCount}</span>
+              <input
+                type="number"
+                min="1"
+                max="100"
+                value={outfitCount}
+                onChange={handleInputChange}
+                className="w-12 text-center text-white font-bold text-sm bg-transparent border-none outline-none focus:ring-1 focus:ring-primary rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
               <button
                 onClick={increment}
                 className="size-8 flex items-center justify-center text-white hover:text-primary transition-colors"
