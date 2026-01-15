@@ -590,14 +590,14 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
                 {filteredModels.map((model) => (
                   <div
                     key={model._id}
-                    className={`relative aspect-[3/4] rounded-xl overflow-hidden group border-2 transition-all cursor-pointer ${currentModel.model_id === model.model_id ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-primary/50'}`}
+                    className={`relative aspect-[9/16] rounded-xl overflow-hidden group border-2 transition-all cursor-pointer ${currentModel.model_id === model.model_id ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-primary/50'}`}
                     onClick={() => {
                       setCurrentModel(model);
                       setIsModelSelectorOpen(false);
                     }}
                   >
                     <img loading="lazy" src={model.image} alt={model.model_id} className="w-full h-full object-cover" />
-                    
+
                     {/* Hover Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
                       {/* Zoom Button - Top Left */}
@@ -611,14 +611,14 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
                       >
                         <ZoomIn className="w-4 h-4" />
                       </button>
-                      
+
                       {/* Model Info - Bottom */}
                       <div className="absolute bottom-0 left-0 right-0 p-2 flex flex-col">
                         <span className="text-white font-bold text-xs truncate">{model.model_id}</span>
                         <span className="text-white/60 text-[10px] truncate">{model.model_ethnicity}</span>
                       </div>
                     </div>
-                    
+
                     {/* Selected Check Mark */}
                     {currentModel.model_id === model.model_id && (
                       <div className="absolute top-2 right-2 bg-primary text-black rounded-full p-1">
