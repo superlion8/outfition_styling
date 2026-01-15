@@ -198,12 +198,12 @@ const TabsView: React.FC<{
 
   return (
     <>
-      <div className="flex gap-2 p-2 overflow-x-auto no-scrollbar shrink-0 border-b border-white/5">
+      <div className="grid grid-cols-2 gap-2 p-2 shrink-0 border-b border-white/5">
         {categories.map(cat => (
           <button
             key={cat.id}
             onClick={() => setActiveTab(cat.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${activeTab === cat.id ? 'bg-primary text-background-dark' : 'bg-white/5 text-text-muted hover:bg-white/10'}`}
+            className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === cat.id ? 'bg-primary text-background-dark shadow-[0_0_10px_rgba(249,220,141,0.3)]' : 'bg-white/5 text-text-muted hover:bg-white/10 hover:text-white'}`}
           >
             {cat.icon}
             {cat.label}
