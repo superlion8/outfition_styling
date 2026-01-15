@@ -144,29 +144,35 @@ function App() {
           )}
 
           {currentView === AppView.RESULTS && (
-            <React.Fragment>
-              {/* Re-render StyleCanvas in a 'minimized' or normal state above results */}
-              {/* Re-render StyleCanvas in a 'minimized' or normal state above results */}
-              <StyleCanvas
-                items={items}
-                onMoveItem={handleMoveItem}
-                onDeleteItem={handleDeleteItem}
-                onClearCategory={handleClearCategory}
-                onUploadItems={handleUploadItems}
-                onStartStyling={startScanning}
-                outfitCount={outfitCount}
-                setOutfitCount={setOutfitCount}
-                isLoading={isLoadingWardrobe}
-              />
-              <StylingResults
-                items={items}
-                onRegenerate={startScanning}
-                outfitCount={outfitCount}
-                generatedOutfits={generatedOutfits}
-                onGenerateLook={generateLook}
-                isGeneratingLook={isGeneratingLook}
-              />
-            </React.Fragment>
+            <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-100px)] items-start">
+              {/* Sidebar - StyleCanvas */}
+              <aside className="w-full lg:w-[320px] shrink-0 overflow-hidden border-r border-white/5 pr-4 flex flex-col h-full bg-background-light/30 backdrop-blur-sm rounded-xl border border-white/5 max-h-full">
+                <StyleCanvas
+                  items={items}
+                  onMoveItem={handleMoveItem}
+                  onDeleteItem={handleDeleteItem}
+                  onClearCategory={handleClearCategory}
+                  onUploadItems={handleUploadItems}
+                  onStartStyling={startScanning}
+                  outfitCount={outfitCount}
+                  setOutfitCount={setOutfitCount}
+                  isLoading={isLoadingWardrobe}
+                  isSidebar={true}
+                />
+              </aside>
+
+              {/* Main Content - Results */}
+              <div className="flex-1 overflow-y-auto pl-2 h-full custom-scrollbar">
+                <StylingResults
+                  items={items}
+                  onRegenerate={startScanning}
+                  outfitCount={outfitCount}
+                  generatedOutfits={generatedOutfits}
+                  onGenerateLook={generateLook}
+                  isGeneratingLook={isGeneratingLook}
+                />
+              </div>
+            </div>
           )}
         </main>
       </div>

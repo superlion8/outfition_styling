@@ -25,6 +25,7 @@ interface ZoneCardProps {
   onDeleteItem: (itemId: string) => void;
   onClearCategory: (category: Category) => void;
   onUploadItems: (files: FileList | null, category: Category) => void;
+  isCompact?: boolean;
 }
 
 const ZoneCard: React.FC<ZoneCardProps> = ({
@@ -36,7 +37,8 @@ const ZoneCard: React.FC<ZoneCardProps> = ({
   onMoveItem,
   onDeleteItem,
   onClearCategory,
-  onUploadItems
+  onUploadItems,
+  isCompact = false
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -87,7 +89,7 @@ const ZoneCard: React.FC<ZoneCardProps> = ({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`bg-card-dark rounded-xl border p-6 flex flex-col gap-4 relative group h-full transition-colors duration-200 min-h-[400px] ${isDragOver ? 'border-primary bg-primary/5 shadow-[0_0_15px_-3px_rgba(140,48,232,0.3)]' : 'border-border-dark'
+      className={`bg-card-dark rounded-xl border ${isCompact ? 'p-3 gap-2 min-h-0' : 'p-6 gap-4 min-h-[400px]'} flex flex-col relative group h-full transition-colors duration-200 ${isDragOver ? 'border-primary bg-primary/5 shadow-[0_0_15px_-3px_rgba(140,48,232,0.3)]' : 'border-border-dark'
         }`}
     >
       <input
@@ -138,7 +140,7 @@ const ZoneCard: React.FC<ZoneCardProps> = ({
           </button>
         </div>
       ) : (
-        <div className="flex-1 grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-3 content-start">
+        <div className={`flex-1 grid ${isCompact ? 'grid-cols-4 gap-2' : 'grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-3'} content-start`}>
           {items.map((item) => (
             <div
               key={item.id}
@@ -175,7 +177,7 @@ const ZoneCard: React.FC<ZoneCardProps> = ({
   );
 };
 
-export const StyleCanvas: React.FC<StyleCanvasProps> = ({
+export const StyleCanvas: React.FC<StyleCanvasProps & { isSidebar?: boolean }> = ({
   items,
   onMoveItem,
   onDeleteItem,
@@ -185,7 +187,8 @@ export const StyleCanvas: React.FC<StyleCanvasProps> = ({
   outfitCount,
   setOutfitCount,
   isLoading = false,
-  isUploading = false
+  isUploading = false,
+  isSidebar = false
 }) => {
   const getItemsByCategory = (cat: Category) => items.filter(i => i.category === cat);
   const [inputValue, setInputValue] = useState(String(outfitCount));
@@ -269,54 +272,109 @@ export const StyleCanvas: React.FC<StyleCanvasProps> = ({
           </button>
         </div>
       </div>
-
-      {/* Styling Canvas Quadrants - Reverted to 2x2 Grid */}
-      <div id="style-canvas-area" className="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[600px] mb-12">
-        <ZoneCard
-          title="Tops"
-          category="tops"
-          items={getItemsByCategory('tops')}
-          icon={<Shirt className="text-primary" />}
-          itemCount={getItemsByCategory('tops').length}
-          onMoveItem={onMoveItem}
-          onDeleteItem={onDeleteItem}
-          onClearCategory={onClearCategory}
-          onUploadItems={onUploadItems}
-        />
-        <ZoneCard
-          title="Bottoms"
-          category="bottoms"
-          items={getItemsByCategory('bottoms')}
-          icon={<FolderOpen className="text-primary" />}
-          itemCount={getItemsByCategory('bottoms').length}
-          onMoveItem={onMoveItem}
-          onDeleteItem={onDeleteItem}
-          onClearCategory={onClearCategory}
-          onUploadItems={onUploadItems}
-        />
-        <ZoneCard
-          title="One-Piece"
-          category="onepiece"
-          items={getItemsByCategory('onepiece')}
-          icon={<CheckCircle2 className="text-primary" />}
-          itemCount={getItemsByCategory('onepiece').length}
-          onMoveItem={onMoveItem}
-          onDeleteItem={onDeleteItem}
-          onClearCategory={onClearCategory}
-          onUploadItems={onUploadItems}
-        />
-        <ZoneCard
-          title="Accessories"
-          category="accessories"
-          items={getItemsByCategory('accessories')}
-          icon={<ShoppingBag className="text-primary" />}
-          itemCount={getItemsByCategory('accessories').length}
-          onMoveItem={onMoveItem}
-          onDeleteItem={onDeleteItem}
-          onClearCategory={onClearCategory}
-          onUploadItems={onUploadItems}
-        />
-      </div>
+      {/* Toggle View for Sidebar vs Canvas */}
+      {isSidebar ? (
+        /* Sidebar View */
+        <div className="flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar flex-1 pb-10">
+          <h3 className="text-lg font-bold text-white px-2 sticky top-0 bg-background-light dark:bg-background-dark z-10 py-2">Wardrobe Items</h3>
+          <ZoneCard
+            title="Tops"
+            category="tops"
+            items={getItemsByCategory('tops')}
+            icon={<Shirt className="text-primary w-4 h-4" />}
+            itemCount={getItemsByCategory('tops').length}
+            onMoveItem={onMoveItem}
+            onDeleteItem={onDeleteItem}
+            onClearCategory={onClearCategory}
+            onUploadItems={onUploadItems}
+            isCompact={true}
+          />
+          <ZoneCard
+            title="Bottoms"
+            category="bottoms"
+            items={getItemsByCategory('bottoms')}
+            icon={<FolderOpen className="text-primary w-4 h-4" />}
+            itemCount={getItemsByCategory('bottoms').length}
+            onMoveItem={onMoveItem}
+            onDeleteItem={onDeleteItem}
+            onClearCategory={onClearCategory}
+            onUploadItems={onUploadItems}
+            isCompact={true}
+          />
+          <ZoneCard
+            title="One-Piece"
+            category="onepiece"
+            items={getItemsByCategory('onepiece')}
+            icon={<CheckCircle2 className="text-primary w-4 h-4" />}
+            itemCount={getItemsByCategory('onepiece').length}
+            onMoveItem={onMoveItem}
+            onDeleteItem={onDeleteItem}
+            onClearCategory={onClearCategory}
+            onUploadItems={onUploadItems}
+            isCompact={true}
+          />
+          <ZoneCard
+            title="Accessories"
+            category="accessories"
+            items={getItemsByCategory('accessories')}
+            icon={<ShoppingBag className="text-primary w-4 h-4" />}
+            itemCount={getItemsByCategory('accessories').length}
+            onMoveItem={onMoveItem}
+            onDeleteItem={onDeleteItem}
+            onClearCategory={onClearCategory}
+            onUploadItems={onUploadItems}
+            isCompact={true}
+          />
+        </div>
+      ) : (
+        /* Normal Grid View */
+        <div id="style-canvas-area" className="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[600px] mb-12">
+          <ZoneCard
+            title="Tops"
+            category="tops"
+            items={getItemsByCategory('tops')}
+            icon={<Shirt className="text-primary" />}
+            itemCount={getItemsByCategory('tops').length}
+            onMoveItem={onMoveItem}
+            onDeleteItem={onDeleteItem}
+            onClearCategory={onClearCategory}
+            onUploadItems={onUploadItems}
+          />
+          <ZoneCard
+            title="Bottoms"
+            category="bottoms"
+            items={getItemsByCategory('bottoms')}
+            icon={<FolderOpen className="text-primary" />}
+            itemCount={getItemsByCategory('bottoms').length}
+            onMoveItem={onMoveItem}
+            onDeleteItem={onDeleteItem}
+            onClearCategory={onClearCategory}
+            onUploadItems={onUploadItems}
+          />
+          <ZoneCard
+            title="One-Piece"
+            category="onepiece"
+            items={getItemsByCategory('onepiece')}
+            icon={<CheckCircle2 className="text-primary" />}
+            itemCount={getItemsByCategory('onepiece').length}
+            onMoveItem={onMoveItem}
+            onDeleteItem={onDeleteItem}
+            onClearCategory={onClearCategory}
+            onUploadItems={onUploadItems}
+          />
+          <ZoneCard
+            title="Accessories"
+            category="accessories"
+            items={getItemsByCategory('accessories')}
+            icon={<ShoppingBag className="text-primary" />}
+            itemCount={getItemsByCategory('accessories').length}
+            onMoveItem={onMoveItem}
+            onDeleteItem={onDeleteItem}
+            onClearCategory={onClearCategory}
+            onUploadItems={onUploadItems}
+          />
+        </div>
+      )}
     </div>
   );
 };
