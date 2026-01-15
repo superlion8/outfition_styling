@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo, useRef } from 'react';
+import React, { useCallback, useState, useMemo, useRef, useEffect } from 'react';
 import {
     ReactFlow,
     Background,
@@ -18,7 +18,7 @@ import imageCompression from 'browser-image-compression';
 import {
     ArrowLeft, Plus, Upload, FolderOpen, Shirt, Image as ImageIcon,
     ZoomIn, ZoomOut, Maximize2, Trash2, Download, Sparkles, MousePointer2,
-    Hand, Type, Layers, SquareDashed, User, Settings2
+    Hand, Type, Layers, SquareDashed, User, Settings2, Filter, X, Check
 } from 'lucide-react';
 import { WardrobeItem } from '../types';
 import modelsDataRaw from '../data/models.json';
@@ -105,7 +105,7 @@ interface ModelSelectorData {
     [key: string]: unknown;
 }
 
-const ModelSelectorNode: React.FC<NodeProps<Node<ModelSelectorData>>> = ({ data, selected }) => {
+const ModelSelectorNode: React.FC<NodeProps<Node<ModelSelectorData>>> = ({ id, data, selected }) => {
     return (
         <div
             className={`
@@ -133,8 +133,7 @@ const ModelSelectorNode: React.FC<NodeProps<Node<ModelSelectorData>>> = ({ data,
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => {
                         e.stopPropagation();
-                        // TODO: Open model selector modal
-                        console.log('Customize Avatar clicked');
+                        window.dispatchEvent(new CustomEvent('openModelSelector', { detail: { nodeId: id } }));
                     }}
                 >
                     <Settings2 className="w-3.5 h-3.5" />
@@ -157,6 +156,16 @@ interface CanvasViewProps {
     onBack: () => void;
 }
 
+// Model type for selector
+interface Model {
+    _id: string;
+    model_id: string;
+    image: string;
+    model_ethnicity: string;
+    model_gender: string;
+}
+const modelsData = modelsDataRaw as Model[];
+
 const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) => {
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -166,6 +175,52 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
     const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
     const [activeTool, setActiveTool] = useState<'select' | 'pan'>('select');
     const [assetTab, setAssetTab] = useState<'wardrobe' | 'uploads' | 'templates'>('wardrobe');
+
+    // Model selector modal state
+    const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
+    const [editingModelNodeId, setEditingModelNodeId] = useState<string | null>(null);
+    const [ethnicityFilter, setEthnicityFilter] = useState('All');
+    const [genderFilter, setGenderFilter] = useState('All');
+
+    // Listen for model selector open event from nodes
+    useEffect(() => {
+        const handleOpenModelSelector = (e: CustomEvent<{ nodeId: string }>) => {
+            setEditingModelNodeId(e.detail.nodeId);
+            setIsModelSelectorOpen(true);
+        };
+        window.addEventListener('openModelSelector', handleOpenModelSelector as EventListener);
+        return () => window.removeEventListener('openModelSelector', handleOpenModelSelector as EventListener);
+    }, []);
+
+    // Filter options
+    const ethnicityOptions = useMemo(() => {
+        const ethnicities = new Set(modelsData.map(m => m.model_ethnicity));
+        return ['All', ...Array.from(ethnicities)].sort();
+    }, []);
+    const genderOptions = useMemo(() => {
+        const genders = new Set(modelsData.map(m => m.model_gender));
+        return ['All', ...Array.from(genders)].sort();
+    }, []);
+    const filteredModels = useMemo(() => {
+        return modelsData.filter(model => {
+            const matchEthnicity = ethnicityFilter === 'All' || model.model_ethnicity === ethnicityFilter;
+            const matchGender = genderFilter === 'All' || model.model_gender === genderFilter;
+            return matchEthnicity && matchGender;
+        });
+    }, [ethnicityFilter, genderFilter]);
+
+    // Handle model selection
+    const handleSelectModel = useCallback((model: Model) => {
+        if (editingModelNodeId) {
+            setNodes((nds) => nds.map(n =>
+                n.id === editingModelNodeId
+                    ? { ...n, data: { ...n.data, modelImage: model.image, modelId: model.model_id } }
+                    : n
+            ));
+        }
+        setIsModelSelectorOpen(false);
+        setEditingModelNodeId(null);
+    }, [editingModelNodeId, setNodes]);
 
     // Add item to canvas with grid layout
     const handleAddItem = useCallback((imageUrl: string, label: string, type: CanvasItemData['type']) => {
@@ -506,6 +561,86 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                     />
                 </ReactFlow>
             </div>
+
+            {/* Model Selector Modal */}
+            {isModelSelectorOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-card-dark border border-border-dark rounded-2xl w-full max-w-[95vw] xl:max-w-[1400px] p-6 shadow-2xl h-[85vh] flex flex-col">
+                        {/* Header */}
+                        <div className="flex justify-between items-center mb-4 shrink-0">
+                            <div className="flex items-center gap-3">
+                                <User className="w-5 h-5 text-primary" />
+                                <h3 className="text-lg font-bold text-white">Select Model</h3>
+                                <span className="text-xs text-text-muted bg-white/5 px-2 py-1 rounded-full">{filteredModels.length} models</span>
+                            </div>
+                            <button
+                                onClick={() => { setIsModelSelectorOpen(false); setEditingModelNodeId(null); }}
+                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5 text-text-muted" />
+                            </button>
+                        </div>
+
+                        {/* Filters */}
+                        <div className="flex flex-wrap gap-4 mb-4 p-3 bg-white/5 rounded-xl border border-white/5 shrink-0">
+                            <div className="flex items-center gap-2 text-text-muted text-sm border-r border-white/10 pr-4">
+                                <Filter className="w-4 h-4" />
+                                <span>Filters:</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-text-muted uppercase font-bold">Ethnicity</span>
+                                <select
+                                    value={ethnicityFilter}
+                                    onChange={(e) => setEthnicityFilter(e.target.value)}
+                                    className="bg-card-dark border border-border-dark text-white rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary"
+                                >
+                                    {ethnicityOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-text-muted uppercase font-bold">Gender</span>
+                                <select
+                                    value={genderFilter}
+                                    onChange={(e) => setGenderFilter(e.target.value)}
+                                    className="bg-card-dark border border-border-dark text-white rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary"
+                                >
+                                    {genderOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Grid */}
+                        <div className="flex-1 overflow-y-auto min-h-0">
+                            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-3">
+                                {filteredModels.map((model) => {
+                                    const currentNode = editingModelNodeId ? nodes.find(n => n.id === editingModelNodeId) : null;
+                                    const isSelected = currentNode?.data?.modelId === model.model_id;
+                                    return (
+                                        <div
+                                            key={model._id}
+                                            className={`relative aspect-[9/16] rounded-xl overflow-hidden group border-2 transition-all cursor-pointer ${isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-primary/50'}`}
+                                            onClick={() => handleSelectModel(model)}
+                                        >
+                                            <img loading="lazy" src={model.image} alt={model.model_id} className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="absolute bottom-0 left-0 right-0 p-2">
+                                                    <span className="text-white font-bold text-xs truncate block">{model.model_id}</span>
+                                                    <span className="text-white/60 text-[10px]">{model.model_ethnicity}</span>
+                                                </div>
+                                            </div>
+                                            {isSelected && (
+                                                <div className="absolute top-2 right-2 bg-primary text-black rounded-full p-1">
+                                                    <Check className="w-3 h-3" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
