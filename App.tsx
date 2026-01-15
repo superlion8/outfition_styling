@@ -70,13 +70,22 @@ function App() {
   useEffect(() => {
     if (wardrobeError) {
       console.error('Wardrobe error:', wardrobeError);
-      // You could add a toast notification here
     }
     if (stylingError) {
       console.error('Styling error:', stylingError);
-      // You could add a toast notification here
     }
   }, [wardrobeError, stylingError]);
+
+  const handleClearCategory = async (category: Category) => {
+    // Optimistically UI will be slower if we wait for all
+    // Just trigger all deletions concurrently
+    const itemsToDelete = items.filter(i => i.category === category);
+    if (itemsToDelete.length === 0) return;
+
+    // We could add a clearItems function to useWardrobe for better performance
+    // For now concurrent delete is acceptable for small wardrobes
+    await Promise.all(itemsToDelete.map(i => deleteItem(i.id)));
+  };
 
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark text-white font-display overflow-x-hidden pb-10">
@@ -97,15 +106,16 @@ function App() {
         <ScannerOverlay onConfirm={confirmScan} onCancel={cancelProcessing} />
       )}
 
-      {/* Main Layout */}
+      {/* Main Layout - Widened to max-w-[1920px] */}
       <div className={`transition-all duration-500 ${currentView === AppView.LOADING ? 'blur-sm opacity-40 pointer-events-none h-screen overflow-hidden' : ''}`}>
 
-        <main className="max-w-[1440px] mx-auto px-6 md:px-10 py-8">
+        <main className="max-w-[1920px] mx-auto px-6 md:px-10 py-8">
           {(currentView === AppView.CANVAS || currentView === AppView.SCANNING) && (
             <StyleCanvas
               items={items}
               onMoveItem={handleMoveItem}
               onDeleteItem={handleDeleteItem}
+              onClearCategory={handleClearCategory}
               onUploadItems={handleUploadItems}
               onStartStyling={startScanning}
               outfitCount={outfitCount}
@@ -118,10 +128,12 @@ function App() {
           {currentView === AppView.RESULTS && (
             <React.Fragment>
               {/* Re-render StyleCanvas in a 'minimized' or normal state above results */}
+              {/* Re-render StyleCanvas in a 'minimized' or normal state above results */}
               <StyleCanvas
                 items={items}
                 onMoveItem={handleMoveItem}
                 onDeleteItem={handleDeleteItem}
+                onClearCategory={handleClearCategory}
                 onUploadItems={handleUploadItems}
                 onStartStyling={startScanning}
                 outfitCount={outfitCount}

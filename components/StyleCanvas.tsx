@@ -1,11 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { Plus, Shirt, CheckCircle2, ShoppingBag, FolderOpen, Wand2, X } from 'lucide-react';
+import { Plus, Shirt, CheckCircle2, ShoppingBag, FolderOpen, Wand2, X, Trash2 } from 'lucide-react';
 import { Category, WardrobeItem } from '../types';
 
 interface StyleCanvasProps {
   items: WardrobeItem[];
   onMoveItem: (itemId: string, newCategory: Category) => void;
   onDeleteItem: (itemId: string) => void;
+  onClearCategory: (category: Category) => void;
   onUploadItems: (files: FileList | null, category: Category) => void;
   onStartStyling: () => void;
   outfitCount: number;
@@ -22,6 +23,7 @@ interface ZoneCardProps {
   itemCount: number;
   onMoveItem: (itemId: string, newCategory: Category) => void;
   onDeleteItem: (itemId: string) => void;
+  onClearCategory: (category: Category) => void;
   onUploadItems: (files: FileList | null, category: Category) => void;
 }
 
@@ -33,6 +35,7 @@ const ZoneCard: React.FC<ZoneCardProps> = ({
   itemCount,
   onMoveItem,
   onDeleteItem,
+  onClearCategory,
   onUploadItems
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
@@ -96,14 +99,29 @@ const ZoneCard: React.FC<ZoneCardProps> = ({
         onChange={(e) => onUploadItems(e.target.files, category)}
       />
 
-      <div className="flex justify-between items-center pointer-events-none">
+      <div className="flex justify-between items-center z-10">
         <div className="flex items-center gap-3">
           {icon}
           <h3 className="text-lg font-bold">{title}</h3>
         </div>
-        <span className={`text-xs font-bold px-2 py-1 rounded border ${hasItems ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-background-dark border-border-dark text-text-muted'}`}>
-          {itemCount} {itemCount === 1 ? 'Item' : 'Items'}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`text-xs font-bold px-2 py-1 rounded border ${hasItems ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-background-dark border-border-dark text-text-muted'}`}>
+            {itemCount} {itemCount === 1 ? 'Item' : 'Items'}
+          </span>
+          {hasItems && (
+            <button
+              onClick={() => {
+                if (window.confirm("Are you sure you want to delete all items in this category?")) {
+                  onClearCategory(category);
+                }
+              }}
+              className="p-1.5 rounded-md hover:bg-white/10 text-text-muted hover:text-red-400 transition-colors"
+              title="Clear All Items"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {!hasItems ? (
@@ -158,6 +176,7 @@ export const StyleCanvas: React.FC<StyleCanvasProps> = ({
   items,
   onMoveItem,
   onDeleteItem,
+  onClearCategory,
   onUploadItems,
   onStartStyling,
   outfitCount,
@@ -258,6 +277,7 @@ export const StyleCanvas: React.FC<StyleCanvasProps> = ({
           itemCount={getItemsByCategory('tops').length}
           onMoveItem={onMoveItem}
           onDeleteItem={onDeleteItem}
+          onClearCategory={onClearCategory}
           onUploadItems={onUploadItems}
         />
         <ZoneCard
@@ -268,6 +288,7 @@ export const StyleCanvas: React.FC<StyleCanvasProps> = ({
           itemCount={getItemsByCategory('bottoms').length}
           onMoveItem={onMoveItem}
           onDeleteItem={onDeleteItem}
+          onClearCategory={onClearCategory}
           onUploadItems={onUploadItems}
         />
         <ZoneCard
@@ -278,6 +299,7 @@ export const StyleCanvas: React.FC<StyleCanvasProps> = ({
           itemCount={getItemsByCategory('onepiece').length}
           onMoveItem={onMoveItem}
           onDeleteItem={onDeleteItem}
+          onClearCategory={onClearCategory}
           onUploadItems={onUploadItems}
         />
         <ZoneCard
@@ -288,6 +310,7 @@ export const StyleCanvas: React.FC<StyleCanvasProps> = ({
           itemCount={getItemsByCategory('accessories').length}
           onMoveItem={onMoveItem}
           onDeleteItem={onDeleteItem}
+          onClearCategory={onClearCategory}
           onUploadItems={onUploadItems}
         />
       </div>
