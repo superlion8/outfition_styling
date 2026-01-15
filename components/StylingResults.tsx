@@ -1,8 +1,22 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { RefreshCw, Heart, Wand2, User, Settings2, Check, X, Sparkles, Loader2, ZoomIn, Download, Home } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { RefreshCw, Heart, Wand2, User, Settings2, Check, X, Sparkles, Loader2, ZoomIn, Download, Home, Filter } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
-import { MOCK_IMAGES, MODELS } from '../constants';
+import { MOCK_IMAGES } from '../constants';
 import { WardrobeItem } from '../types';
+import modelsDataRaw from '../data/models.json';
+
+// Type definition for the new model data
+interface Model {
+  _id: string;
+  model_id: string;
+  image: string;
+  model_ethnicity: string;
+  model_gender: string;
+  model_desc: string;
+  // Add other fields as needed
+}
+
+const modelsData = modelsDataRaw as Model[];
 
 interface OutfitItem {
   id: string;
@@ -35,29 +49,6 @@ interface DropSlotProps {
   className?: string;
   label?: string;
 }
-
-// Helper to convert URL to Base64
-const urlToBase64 = async (url: string): Promise<string> => {
-  try {
-    const response = await fetch(url, { mode: 'cors' });
-    if (!response.ok) throw new Error('Network response was not ok');
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        // Remove data:image/jpeg;base64, prefix
-        const base64Data = base64String.split(',')[1];
-        resolve(base64Data);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  } catch (error) {
-    console.error("Error converting image to base64:", error);
-    throw error;
-  }
-};
 
 const DropSlot: React.FC<DropSlotProps> = ({ image, onImageDrop, style, className, label }) => {
   const [isDragOver, setIsDragOver] = useState(false);
@@ -138,13 +129,38 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
   const [previewImage, setPreviewImage] = useState<string | undefined>(undefined);
 
   // Model State
-  const [currentModel, setCurrentModel] = useState(MODELS[0]);
+  const [currentModel, setCurrentModel] = useState<Model>(modelsData[0]);
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
+
+  // Filter State
+  const [ethnicityFilter, setEthnicityFilter] = useState('All');
+  const [genderFilter, setGenderFilter] = useState('All');
 
   const hasAccessories = items.some(item => item.category === 'accessories');
 
   // Outfit Grid State
   const [outfits, setOutfits] = useState<OutfitState[]>([]);
+
+  // Compute Filter Options
+  const ethnicityOptions = useMemo(() => {
+    const ethnicities = new Set(modelsData.map(m => m.model_ethnicity));
+    return ['All', ...Array.from(ethnicities)].sort();
+  }, []);
+
+  const genderOptions = useMemo(() => {
+    const genders = new Set(modelsData.map(m => m.model_gender));
+    return ['All', ...Array.from(genders)].sort();
+  }, []);
+
+  // Filter Models
+  const filteredModels = useMemo(() => {
+    return modelsData.filter(model => {
+      const matchEthnicity = ethnicityFilter === 'All' || model.model_ethnicity === ethnicityFilter;
+      const matchGender = genderFilter === 'All' || model.model_gender === genderFilter;
+      return matchEthnicity && matchGender;
+    });
+  }, [ethnicityFilter, genderFilter]);
+
 
   // Initialize outfits from API response or use fallback
   useEffect(() => {
@@ -196,15 +212,10 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
     setOutfits(prev => prev.map((o, i) => i === index ? { ...o, isGenerating: true } : o));
 
     try {
-      // Reconstruct the Outfit object with full item details (needed for image_path)
-      // Note: The type expectation in generateLook might need to be adjusted or we cast here
-      // transforming WardrobeItem to OutfitItem structure if needed
       const topItem = findItemByUrl(currentOutfitState.tops);
       const bottomItem = findItemByUrl(currentOutfitState.bottoms);
       const accessoryItem = findItemByUrl(currentOutfitState.accessories);
 
-      // Construct an object compatible with what useStyling expects (Outfit interface)
-      // We need to map WardrobeItem to OutfitItem structure
       const mapToOutfitItem = (item?: WardrobeItem) => {
         if (!item) return undefined;
         return {
@@ -226,7 +237,7 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
         top: mapToOutfitItem(topItem),
         bottom: mapToOutfitItem(bottomItem),
         accessory: mapToOutfitItem(accessoryItem),
-        model_image_url: currentModel.imageUrl
+        model_image_url: currentModel.image // Updated field name
       };
 
       // Correction: If the item in 'tops' slot is actually a 'onepiece', put it in onepiece field
@@ -330,7 +341,7 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
           {/* Image */}
           <div
             className="flex-1 rounded-lg bg-cover bg-center bg-no-repeat relative border border-white/5 transition-all duration-500"
-            style={{ backgroundImage: `url(${currentModel.imageUrl})` }}
+            style={{ backgroundImage: `url(${currentModel.image})` }} // Updated field
           >
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
 
@@ -513,9 +524,15 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
       {/* Model Selector Modal */}
       {isModelSelectorOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-card-dark border border-border-dark rounded-2xl w-full max-w-2xl p-6 relative shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white">Select Model</h3>
+          <div className="bg-card-dark border border-border-dark rounded-2xl w-full max-w-4xl p-6 relative shadow-2xl animate-in zoom-in-95 duration-200 h-[80vh] flex flex-col">
+
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6 shrink-0">
+              <div className="flex items-center gap-3">
+                <User className="w-6 h-6 text-primary" />
+                <h3 className="text-xl font-bold text-white">Select Model</h3>
+                <span className="text-xs text-text-muted bg-white/5 px-2 py-1 rounded-full">{filteredModels.length} models</span>
+              </div>
               <button
                 onClick={() => setIsModelSelectorOpen(false)}
                 className="p-2 hover:bg-white/10 rounded-full transition-colors"
@@ -524,27 +541,74 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
               </button>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {MODELS.map((model) => (
-                <button
-                  key={model.id}
-                  onClick={() => {
-                    setCurrentModel(model);
-                    setIsModelSelectorOpen(false);
-                  }}
-                  className={`relative aspect-[3/4] rounded-xl overflow-hidden group border-2 transition-all ${currentModel.id === model.id ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-primary/50'}`}
+            {/* Filters */}
+            <div className="flex flex-wrap gap-4 mb-6 p-4 bg-white/5 rounded-xl border border-white/5 shrink-0">
+              <div className="flex items-center gap-2 text-text-muted text-sm border-r border-white/10 pr-4">
+                <Filter className="w-4 h-4" />
+                <span>Filters:</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-text-muted uppercase tracking-wider font-bold">Ethnicity</span>
+                <select
+                  value={ethnicityFilter}
+                  onChange={(e) => setEthnicityFilter(e.target.value)}
+                  className="bg-card-dark border border-border-dark text-white rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary"
                 >
-                  <img src={model.imageUrl} alt={model.name} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
-                    <span className="text-white font-bold text-sm">{model.name}</span>
-                  </div>
-                  {currentModel.id === model.id && (
-                    <div className="absolute top-2 right-2 bg-primary text-black rounded-full p-1">
-                      <Check className="w-3 h-3" />
-                    </div>
-                  )}
+                  {ethnicityOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-text-muted uppercase tracking-wider font-bold">Gender</span>
+                <select
+                  value={genderFilter}
+                  onChange={(e) => setGenderFilter(e.target.value)}
+                  className="bg-card-dark border border-border-dark text-white rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary"
+                >
+                  {genderOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+
+              {(ethnicityFilter !== 'All' || genderFilter !== 'All') && (
+                <button
+                  onClick={() => { setEthnicityFilter('All'); setGenderFilter('All'); }}
+                  className="text-xs text-primary hover:underline ml-auto"
+                >
+                  Clear Filters
                 </button>
-              ))}
+              )}
+            </div>
+
+            {/* Grid */}
+            <div className="flex-1 overflow-y-auto min-h-0 -mr-2 pr-2">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                {filteredModels.map((model) => (
+                  <button
+                    key={model._id}
+                    onClick={() => {
+                      setCurrentModel(model);
+                      setIsModelSelectorOpen(false);
+                    }}
+                    className={`relative aspect-[9/16] rounded-xl overflow-hidden group border-2 transition-all ${currentModel.model_id === model.model_id ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-primary/50'}`}
+                  >
+                    <img loading="lazy" src={model.image} alt={model.model_id} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
+                      <span className="text-white font-bold text-xs truncate">{model.model_id}</span>
+                      <span className="text-white/60 text-[10px] truncate">{model.model_ethnicity}</span>
+                    </div>
+                    {currentModel.model_id === model.model_id && (
+                      <div className="absolute top-2 right-2 bg-primary text-black rounded-full p-1">
+                        <Check className="w-3 h-3" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
