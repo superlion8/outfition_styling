@@ -170,6 +170,7 @@ function App() {
                   generatedOutfits={generatedOutfits}
                   onGenerateLook={generateLook}
                   isGeneratingLook={isGeneratingLook}
+                  onBack={cancelProcessing}
                 />
               </div>
             </div>

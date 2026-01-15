@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { RefreshCw, Heart, Wand2, User, Settings2, Check, X, Sparkles, Loader2, ZoomIn, Download } from 'lucide-react';
+import { RefreshCw, Heart, Wand2, User, Settings2, Check, X, Sparkles, Loader2, ZoomIn, Download, Home } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { MOCK_IMAGES, MODELS } from '../constants';
 import { WardrobeItem } from '../types';
@@ -24,6 +24,7 @@ interface StylingResultsProps {
   generatedOutfits?: GeneratedOutfit[];
   onGenerateLook?: (index: number, outfit: any) => Promise<string | null>;
   isGeneratingLook?: boolean;
+  onBack?: () => void;
 }
 
 interface DropSlotProps {
@@ -124,7 +125,9 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
   onRegenerate,
   outfitCount,
   generatedOutfits,
-  onGenerateLook
+  onGenerateLook,
+  isGeneratingLook,
+  onBack
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -259,7 +262,6 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
   const handleMouseUp = () => {
     setIsDragging(false);
   };
-
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || !scrollContainerRef.current) return;
     e.preventDefault();
@@ -276,26 +278,36 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
   };
 
   return (
-    <div className="animate-in fade-in duration-700 slide-in-from-bottom-8 mt-6">
-
-      {/* Header Actions - Full Width Row */}
-      <div className="flex flex-wrap justify-between items-end mb-6 gap-4">
-        <div className="flex flex-col gap-1">
-          <h3 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Wand2 className="text-primary w-6 h-6" />
-            Styling Results
-          </h3>
-          <p className="text-text-muted text-sm">Review AI-generated outfits below. Drag items from the zones above to swap components.</p>
+    <div className="flex flex-col gap-6 fade-in h-full">
+      <div className="flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-4">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="p-3 bg-card-dark hover:bg-white/10 border border-border-dark rounded-xl transition-colors text-text-muted hover:text-white"
+              title="Return to Home"
+            >
+              <Home className="w-5 h-5" />
+            </button>
+          )}
+          <div className="flex flex-col gap-1">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              Styling Results
+            </h2>
+            <p className="text-text-muted text-sm">Review AI-generated outfits below. Drag items from the zones above to swap components.</p>
+          </div>
         </div>
-        <div className="flex gap-3">
+
+        <div className="flex items-center gap-3">
           <button
             onClick={onRegenerate}
-            className="px-4 py-2 bg-border-dark hover:bg-[#3d3448] text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-card-dark hover:bg-white/10 border border-border-dark text-white rounded-lg font-bold flex items-center gap-2 transition-colors text-sm"
           >
             <RefreshCw className="w-4 h-4" />
             Regenerate
           </button>
-          <button className="px-4 py-2 bg-primary hover:bg-primary-hover text-background-dark text-sm font-bold rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-primary/20">
+          <button className="px-4 py-2 bg-primary hover:bg-primary-hover text-background-dark rounded-lg font-bold flex items-center gap-2 transition-colors text-sm">
             <Heart className="w-4 h-4" />
             Save All Looks
           </button>
