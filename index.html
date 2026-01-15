@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FashionAI Canvas</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              primary: "#f9dc8d",
+              "primary-hover": "#e6c775",
+              "background-light": "#f8f7f5",
+              "background-dark": "#221d10",
+              "card-dark": "#1c1823",
+              "border-dark": "#302938",
+              "accent-purple": "#8c30e8",
+              "text-muted": "#ab9db8"
+            },
+            fontFamily: {
+              display: ["Sora", "sans-serif"],
+              body: ["Plus Jakarta Sans", "sans-serif"],
+            },
+            animation: {
+              'scan': 'scan 2s linear infinite',
+            },
+            keyframes: {
+              scan: {
+                '0%': { transform: 'translateY(-100%)' },
+                '100%': { transform: 'translateY(400%)' },
+              }
+            }
+          }
+        }
+      };
+    </script>
+    <style>
+      body {
+        font-family: "Sora", sans-serif;
+      }
+      .glass-panel {
+        background: rgba(25, 17, 33, 0.85);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(140, 48, 232, 0.2);
+      }
+      .scan-line {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #8c30e8, transparent);
+        box-shadow: 0 0 15px #8c30e8;
+        width: 100%;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.36.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-background-light dark:bg-background-dark text-white overflow-x-hidden">
+    <div id="root"></div>
+  </body>
+</html>
