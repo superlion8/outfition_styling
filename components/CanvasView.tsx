@@ -35,7 +35,7 @@ const CanvasItemNode: React.FC<NodeProps<Node<CanvasItemData>>> = ({ data, selec
                 relative bg-card-dark rounded-lg overflow-hidden border transition-all duration-200 shadow-lg
                 ${selected ? 'border-primary ring-2 ring-primary/40' : 'border-border-dark hover:border-primary/50'}
             `}
-            style={{ width: 80, height: 100 }}
+            style={{ width: 40, height: 50 }}
         >
             <img
                 src={data.imageUrl}
