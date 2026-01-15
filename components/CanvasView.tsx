@@ -18,9 +18,10 @@ import imageCompression from 'browser-image-compression';
 import {
     ArrowLeft, Plus, Upload, FolderOpen, Shirt, Image as ImageIcon,
     ZoomIn, ZoomOut, Maximize2, Trash2, Download, Sparkles, MousePointer2,
-    Hand, Type, Layers, SquareDashed
+    Hand, Type, Layers, SquareDashed, User, Settings2
 } from 'lucide-react';
 import { WardrobeItem } from '../types';
+import modelsDataRaw from '../data/models.json';
 
 // Custom Node for Canvas Items
 interface CanvasItemData {
@@ -97,10 +98,50 @@ const ResizableImageNode: React.FC<NodeProps<Node<ResizableImageData>>> = ({ dat
     );
 };
 
+// Model Selector Node (for canvas)
+interface ModelSelectorData {
+    modelImage: string;
+    modelId: string;
+    [key: string]: unknown;
+}
+
+const ModelSelectorNode: React.FC<NodeProps<Node<ModelSelectorData>>> = ({ data, selected }) => {
+    return (
+        <div
+            className={`
+                relative bg-card-dark rounded-xl overflow-hidden border-2 transition-all duration-200 shadow-2xl
+                ${selected ? 'border-primary ring-4 ring-primary/30' : 'border-border-dark'}
+            `}
+            style={{ width: 160, height: 240 }}
+        >
+            {/* Header Badge */}
+            <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full border border-white/10">
+                <User className="w-3 h-3 text-primary" />
+                <span className="text-white text-[10px] font-bold">Model Preview</span>
+            </div>
+
+            {/* Model Image */}
+            <div
+                className="w-full h-full bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: `url(${data.modelImage})` }}
+            >
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+
+                {/* Customize Button */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-white/15 backdrop-blur-md border border-white/20 rounded-lg text-white text-[10px] font-bold flex items-center gap-1.5">
+                    <Settings2 className="w-3 h-3" />
+                    Customize Avatar
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const nodeTypes = {
     canvasItem: CanvasItemNode,
     whiteboard: WhiteboardNode,
     resizableImage: ResizableImageNode,
+    modelSelector: ModelSelectorNode,
 };
 
 interface CanvasViewProps {
@@ -158,6 +199,19 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         };
         setNodes((nds) => [...nds, newNode]);
     }, [setNodes, nodes]);
+
+    // Add model selector to canvas
+    const handleAddModel = useCallback(() => {
+        const models = modelsDataRaw as { model_id: string; image: string }[];
+        const randomModel = models[Math.floor(Math.random() * models.length)];
+        const newNode: Node<ModelSelectorData> = {
+            id: `model-${Date.now()}`,
+            type: 'modelSelector',
+            position: { x: 150, y: 0 },
+            data: { modelImage: randomModel.image, modelId: randomModel.model_id },
+        };
+        setNodes((nds) => [...nds, newNode]);
+    }, [setNodes]);
 
     // Handle file upload with compression (parallel)
     const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -377,6 +431,14 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                     >
                         <SquareDashed className="w-4 h-4" />
                         Whiteboard
+                    </button>
+                    <button
+                        onClick={handleAddModel}
+                        className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-bold text-sm flex items-center gap-2 transition-colors border border-border-dark"
+                        title="Add a model selector"
+                    >
+                        <User className="w-4 h-4" />
+                        Model
                     </button>
                     <button
                         onClick={() => fileInputRef.current?.click()}
