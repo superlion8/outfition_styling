@@ -4,13 +4,16 @@ import { StyleCanvas } from './components/StyleCanvas';
 import { LoadingOverlay } from './components/LoadingOverlay';
 import { StylingResults } from './components/StylingResults';
 import { ScannerOverlay } from './components/ScannerOverlay';
+import { InfiniteCanvas } from './components/InfiniteCanvas';
 import { AppView, WardrobeItem, Category } from './types';
 import { useWardrobe } from './hooks/useWardrobe';
 import { useStyling } from './hooks/useStyling';
+import { Grid3X3, LayoutPanelLeft } from 'lucide-react';
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>(AppView.CANVAS);
   const [outfitCount, setOutfitCount] = useState(3);
+  const [homeTab, setHomeTab] = useState<'grid' | 'canvas'>('grid');
 
   // Supabase-backed wardrobe management
   const {
@@ -129,18 +132,55 @@ function App() {
 
         <main className="max-w-[1920px] mx-auto px-6 md:px-10 py-8">
           {(currentView === AppView.CANVAS || currentView === AppView.SCANNING) && (
-            <StyleCanvas
-              items={items}
-              onMoveItem={handleMoveItem}
-              onDeleteItem={handleDeleteItem}
-              onClearCategory={handleClearCategory}
-              onUploadItems={handleUploadItems}
-              onStartStyling={startScanning}
-              outfitCount={outfitCount}
-              setOutfitCount={setOutfitCount}
-              isLoading={isLoadingWardrobe}
-              isUploading={isUploading}
-            />
+            <>
+              {/* Tab Switcher */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex items-center bg-card-dark rounded-xl p-1 border border-border-dark">
+                  <button
+                    onClick={() => setHomeTab('grid')}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${homeTab === 'grid' ? 'bg-primary text-background-dark' : 'text-text-muted hover:text-white hover:bg-white/5'}`}
+                  >
+                    <Grid3X3 className="w-4 h-4" />
+                    Grid View
+                  </button>
+                  <button
+                    onClick={() => setHomeTab('canvas')}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${homeTab === 'canvas' ? 'bg-primary text-background-dark' : 'text-text-muted hover:text-white hover:bg-white/5'}`}
+                  >
+                    <LayoutPanelLeft className="w-4 h-4" />
+                    Canvas
+                  </button>
+                </div>
+                <span className="text-text-muted text-sm">|
+                  {homeTab === 'grid' ? ' Organize by category' : ' Free-form composition'}
+                </span>
+              </div>
+
+              {homeTab === 'grid' ? (
+                <StyleCanvas
+                  items={items}
+                  onMoveItem={handleMoveItem}
+                  onDeleteItem={handleDeleteItem}
+                  onClearCategory={handleClearCategory}
+                  onUploadItems={handleUploadItems}
+                  onStartStyling={startScanning}
+                  outfitCount={outfitCount}
+                  setOutfitCount={setOutfitCount}
+                  isLoading={isLoadingWardrobe}
+                  isUploading={isUploading}
+                />
+              ) : (
+                <div className="h-[calc(100vh-200px)]">
+                  <InfiniteCanvas
+                    items={items}
+                    onExportForAI={(dataUrl) => {
+                      // TODO: Send to AI for styling
+                      console.log('Canvas exported for AI:', dataUrl.substring(0, 100));
+                    }}
+                  />
+                </div>
+              )}
+            </>
           )}
 
           {currentView === AppView.RESULTS && (
