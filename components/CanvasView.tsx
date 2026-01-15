@@ -72,10 +72,12 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         setNodes((nds) => {
             const nodeWidth = 50;
             const nodeHeight = 60;
-            const gap = 4;
-            const cols = 10; // 10 columns per row
-            const startX = 50;
-            const startY = 50;
+            const gap = 1;
+            const cols = 12; // 12 columns per row
+            // Center grid around origin (0,0)
+            const gridWidth = cols * (nodeWidth + gap);
+            const startX = -gridWidth / 2;
+            const startY = -200;
 
             const index = nds.length;
             const col = index % cols;
