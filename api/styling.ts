@@ -1,6 +1,56 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { callVertexAI } from '../lib/vertexai';
+import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
+
+// ============ Vertex AI Client (inlined) ============
+
+// 确保设置 Vertex AI 模式环境变量
+if (!process.env.GOOGLE_GENAI_USE_VERTEXAI) {
+    process.env.GOOGLE_GENAI_USE_VERTEXAI = "true";
+}
+
+// GenAI 客户端缓存
+let genAIClient: GoogleGenAI | null = null;
+
+// 获取 API Key
+function getApiKey(): string {
+    const apiKey = process.env.VERTEX_AI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        throw new Error("VERTEX_AI_API_KEY or GEMINI_API_KEY environment variable is required");
+    }
+    return apiKey;
+}
+
+// 获取 GenAI 客户端（单例）
+function getVertexAIClient(): GoogleGenAI {
+    if (!genAIClient) {
+        const apiKey = getApiKey();
+        genAIClient = new GoogleGenAI({ apiKey });
+    }
+    return genAIClient;
+}
+
+// 安全设置配置
+const safetySettings = [
+    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+];
+
+// 调用 Vertex AI Gemini API
+async function callVertexAI(modelId: string, contents: any[], config?: any): Promise<any> {
+    const client = getVertexAIClient();
+    const finalConfig = { ...config, safetySettings };
+    const response = await client.models.generateContent({
+        model: modelId,
+        contents: contents,
+        config: finalConfig,
+    });
+    return response;
+}
+
+// ============ End Vertex AI Client ============
 
 // Types
 type Category = 'tops' | 'bottoms' | 'onepiece' | 'accessories';
