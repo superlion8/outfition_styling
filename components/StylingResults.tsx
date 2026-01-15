@@ -48,9 +48,10 @@ interface DropSlotProps {
   style?: React.CSSProperties;
   className?: string;
   label?: string;
+  onImageClick?: (imageUrl: string) => void;
 }
 
-const DropSlot: React.FC<DropSlotProps> = ({ image, onImageDrop, style, className, label }) => {
+const DropSlot: React.FC<DropSlotProps> = ({ image, onImageDrop, style, className, label, onImageClick }) => {
   const [isDragOver, setIsDragOver] = useState(false);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -82,20 +83,30 @@ const DropSlot: React.FC<DropSlotProps> = ({ image, onImageDrop, style, classNam
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`${className} ${isDragOver ? 'border-primary shadow-[0_0_15px_-3px_rgba(140,48,232,0.5)]' : 'border-border-dark'}`}
+      className={`${className} ${isDragOver ? 'border-primary shadow-[0_0_15px_-3px_rgba(140,48,232,0.5)]' : 'border-border-dark'} relative`}
     >
       {image && (
-        <div
-          className="w-full h-full bg-cover bg-center rounded opacity-80 group-hover/slot:opacity-100 transition-opacity"
-          style={{ backgroundImage: `url('${image}')`, ...style }}
-        ></div>
+        <>
+          <div
+            className="w-full h-full bg-cover bg-center rounded group-hover/slot:opacity-100 transition-opacity cursor-pointer"
+            style={{ backgroundImage: `url('${image}')`, ...style }}
+            onClick={() => onImageClick && onImageClick(image)}
+          ></div>
+
+          {/* Zoom Hint */}
+          <div className="absolute top-2 right-2 opacity-0 group-hover/slot:opacity-100 transition-opacity pointer-events-none">
+            <div className="bg-black/60 rounded-full p-1.5 text-white backdrop-blur-sm">
+              <ZoomIn className="w-3 h-3" />
+            </div>
+          </div>
+        </>
       )}
       {!image && (
-        <div className="w-full h-full rounded opacity-30 bg-white/5 flex items-center justify-center">
+        <div className="w-full h-full rounded opacity-30 bg-white/5 flex items-center justify-center pointer-events-none">
           <span className="text-white/20 text-xs">Empty</span>
         </div>
       )}
-      {label && (
+      {label && !image && (
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/slot:opacity-100 transition-opacity pointer-events-none">
           <span className="bg-black/70 text-white text-[10px] px-2 py-1 rounded-full backdrop-blur-sm">{label}</span>
         </div>
@@ -416,6 +427,7 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
                     onImageDrop={(url) => updateOutfit(i, 'tops', url)}
                     label="Drop to swap"
                     className="relative bg-background-dark aspect-[4/3] flex items-center justify-center group/slot hover:ring-2 hover:ring-primary hover:ring-inset transition-all cursor-grab active:cursor-grabbing rounded-t-lg overflow-hidden"
+                    onImageClick={setPreviewImage}
                   />
                 ))}
               </div>
@@ -429,6 +441,7 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
                     image={outfit.bottoms}
                     onImageDrop={(url) => updateOutfit(i, 'bottoms', url)}
                     className="relative bg-background-dark aspect-[4/3] flex items-center justify-center group/slot hover:ring-2 hover:ring-primary hover:ring-inset transition-all cursor-grab active:cursor-grabbing rounded-b-lg overflow-hidden"
+                    onImageClick={setPreviewImage}
                   />
                 ))}
               </div>
@@ -443,6 +456,7 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
                       image={outfit.accessories}
                       onImageDrop={(url) => updateOutfit(i, 'accessories', url)}
                       className="relative bg-background-dark aspect-square flex items-center justify-center group/slot hover:ring-2 hover:ring-primary hover:ring-inset transition-all cursor-grab active:cursor-grabbing rounded-lg overflow-hidden"
+                      onImageClick={setPreviewImage}
                     />
                   ))}
                 </div>
