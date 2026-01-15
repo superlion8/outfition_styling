@@ -9,8 +9,10 @@ if (!process.env.GOOGLE_GENAI_USE_VERTEXAI) {
 let genAIClient: GoogleGenAI | null = null;
 
 function getApiKey(): string {
-    const apiKey = process.env.GOOGLE_API_KEY;
-    if (!apiKey) throw new Error('GOOGLE_API_KEY not set');
+    const apiKey = process.env.VERTEX_AI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        throw new Error("VERTEX_AI_API_KEY or GEMINI_API_KEY environment variable is required");
+    }
     return apiKey;
 }
 
