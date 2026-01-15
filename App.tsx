@@ -40,7 +40,7 @@ function App() {
   };
 
 
-  const confirmScan = async () => {
+  const confirmScan = async (userPrompt?: string) => {
     // Capture screenshot of the StyleCanvas
     let screenshotBase64 = undefined;
     const element = document.getElementById('style-canvas-area');
@@ -59,7 +59,7 @@ function App() {
 
     setCurrentView(AppView.LOADING);
     // Start the styling API call (don't await - LoadingOverlay watches isGenerating)
-    generateOutfits(outfitCount, screenshotBase64);
+    generateOutfits(outfitCount, screenshotBase64, userPrompt);
   };
 
   const cancelProcessing = () => {

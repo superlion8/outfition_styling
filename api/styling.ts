@@ -67,6 +67,7 @@ interface StylingRequest {
     user_id: string;
     outfit_count: number;
     screenshot?: string;
+    user_prompt?: string;
 }
 
 interface OutfitResult {
@@ -288,6 +289,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     console.error(`Failed to load image for accessory #${item.order_index}:`, e);
                 }
             }
+        }
+
+        // Add user preferences custom instruction
+        if (req.body.user_prompt) {
+            promptParts.push({
+                text: `\n\n**用户的特别要求 (User Preferences):**\n${req.body.user_prompt}\n请务必在搭配时遵从上述要求。\n`
+            });
         }
 
         // Add output format instruction
