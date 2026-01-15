@@ -590,25 +590,44 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
             <div className="flex-1 overflow-y-auto min-h-0 -mr-2 pr-2">
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
                 {filteredModels.map((model) => (
-                  <button
+                  <div
                     key={model._id}
+                    className={`relative aspect-[3/4] rounded-xl overflow-hidden group border-2 transition-all cursor-pointer ${currentModel.model_id === model.model_id ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-primary/50'}`}
                     onClick={() => {
                       setCurrentModel(model);
                       setIsModelSelectorOpen(false);
                     }}
-                    className={`relative aspect-[3/4] rounded-xl overflow-hidden group border-2 transition-all ${currentModel.model_id === model.model_id ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-primary/50'}`}
                   >
                     <img loading="lazy" src={model.image} alt={model.model_id} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
-                      <span className="text-white font-bold text-xs truncate">{model.model_id}</span>
-                      <span className="text-white/60 text-[10px] truncate">{model.model_ethnicity}</span>
+                    
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Zoom Button - Top Left */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewImage(model.image);
+                        }}
+                        className="absolute top-2 left-2 p-1.5 bg-black/60 hover:bg-black/80 rounded-lg text-white transition-colors"
+                        title="点击放大"
+                      >
+                        <ZoomIn className="w-4 h-4" />
+                      </button>
+                      
+                      {/* Model Info - Bottom */}
+                      <div className="absolute bottom-0 left-0 right-0 p-2 flex flex-col">
+                        <span className="text-white font-bold text-xs truncate">{model.model_id}</span>
+                        <span className="text-white/60 text-[10px] truncate">{model.model_ethnicity}</span>
+                      </div>
                     </div>
+                    
+                    {/* Selected Check Mark */}
                     {currentModel.model_id === model.model_id && (
                       <div className="absolute top-2 right-2 bg-primary text-black rounded-full p-1">
                         <Check className="w-3 h-3" />
                       </div>
                     )}
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>
