@@ -125,23 +125,27 @@ export function useWardrobe(): UseWardrobeReturn {
         }
     }, [userId, refreshItems]);
 
-    // Delete an item
+    // Delete an item (optimistic update - UI first, then database)
     const deleteItem = useCallback(async (itemId: string) => {
         setError(null);
 
-        try {
-            // Get the item first to find its storage path
-            const { data: item } = await supabase
-                .from('wardrobe_items')
-                .select('image_path')
-                .eq('id', itemId)
-                .single();
+        // Find the item to get its storage path before removing from state
+        const itemToDelete = items.find(i => i.id === itemId);
 
-            if (item) {
-                // Delete from storage
-                await supabase.storage
-                    .from(WARDROBE_BUCKET)
-                    .remove([item.image_path]);
+        // Optimistic update: remove from UI immediately
+        setItems(prev => prev.filter(i => i.id !== itemId));
+
+        try {
+            // Delete from storage (in background)
+            if (itemToDelete) {
+                // Extract storage path from imageUrl
+                const storagePath = itemToDelete.imageUrl.split('/wardrobe/')[1];
+                if (storagePath) {
+                    supabase.storage
+                        .from(WARDROBE_BUCKET)
+                        .remove([decodeURIComponent(storagePath)])
+                        .catch(e => console.error('Failed to delete from storage:', e));
+                }
             }
 
             // Delete from database
@@ -150,15 +154,23 @@ export function useWardrobe(): UseWardrobeReturn {
                 .delete()
                 .eq('id', itemId);
 
-            if (deleteError) throw deleteError;
-
-            // Update local state
-            setItems(prev => prev.filter(i => i.id !== itemId));
+            if (deleteError) {
+                // Rollback: restore the item if database deletion failed
+                console.error('Failed to delete item:', deleteError);
+                if (itemToDelete) {
+                    setItems(prev => [...prev, itemToDelete]);
+                }
+                setError(deleteError.message);
+            }
         } catch (e) {
             console.error('Failed to delete item:', e);
+            // Rollback on error
+            if (itemToDelete) {
+                setItems(prev => [...prev, itemToDelete]);
+            }
             setError(e instanceof Error ? e.message : 'Failed to delete item');
         }
-    }, []);
+    }, [items]);
 
     // Move item to a different category
     const moveItem = useCallback(async (itemId: string, newCategory: Category) => {
