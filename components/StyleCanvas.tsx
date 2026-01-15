@@ -164,14 +164,27 @@ export const StyleCanvas: React.FC<StyleCanvasProps> = ({
   isLoading = false
 }) => {
   const getItemsByCategory = (cat: Category) => items.filter(i => i.category === cat);
+  const [inputValue, setInputValue] = useState(String(outfitCount));
+
+  // Sync input value when outfitCount changes from outside (e.g., +/- buttons)
+  React.useEffect(() => {
+    setInputValue(String(outfitCount));
+  }, [outfitCount]);
 
   const increment = () => setOutfitCount(Math.min(outfitCount + 1, 100));
   const decrement = () => setOutfitCount(Math.max(outfitCount - 1, 1));
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value)) {
-      setOutfitCount(Math.min(Math.max(value, 1), 100));
+    setInputValue(e.target.value); // Allow any input while typing
+  };
+
+  const handleInputBlur = () => {
+    const value = parseInt(inputValue, 10);
+    if (!isNaN(value) && value >= 1 && value <= 100) {
+      setOutfitCount(value);
+    } else {
+      // Reset to current valid value if invalid
+      setInputValue(String(outfitCount));
     }
   };
 
@@ -199,8 +212,9 @@ export const StyleCanvas: React.FC<StyleCanvasProps> = ({
                 type="number"
                 min="1"
                 max="100"
-                value={outfitCount}
+                value={inputValue}
                 onChange={handleInputChange}
+                onBlur={handleInputBlur}
                 className="w-12 text-center text-white font-bold text-sm bg-transparent border-none outline-none focus:ring-1 focus:ring-primary rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <button
