@@ -362,6 +362,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         for (const vlmOutfit of vlmOutfits.outfits) {
             const result: OutfitResult = {};
+            if (vlmOutfit.reason) result.reason = vlmOutfit.reason;
 
             if (vlmOutfit.top_index !== undefined) {
                 const topItem = itemsByCategory.tops.find(i => i.order_index === vlmOutfit.top_index);
@@ -369,7 +370,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     result.top = {
                         id: topItem.id,
                         image_url: getPublicUrl(topItem.image_path),
-                        order_index: topItem.order_index
+                        order_index: topItem.order_index,
+                        image_path: topItem.image_path,
+                        category: 'tops'
                     };
                 }
             }
@@ -380,7 +383,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     result.bottom = {
                         id: bottomItem.id,
                         image_url: getPublicUrl(bottomItem.image_path),
-                        order_index: bottomItem.order_index
+                        order_index: bottomItem.order_index,
+                        image_path: bottomItem.image_path,
+                        category: 'bottoms'
                     };
                 }
             }
@@ -391,7 +396,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     result.onepiece = {
                         id: onepieceItem.id,
                         image_url: getPublicUrl(onepieceItem.image_path),
-                        order_index: onepieceItem.order_index
+                        order_index: onepieceItem.order_index,
+                        image_path: onepieceItem.image_path,
+                        category: 'onepiece'
                     };
                 }
             }
@@ -402,7 +409,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     result.accessory = {
                         id: accItem.id,
                         image_url: getPublicUrl(accItem.image_path),
-                        order_index: accItem.order_index
+                        order_index: accItem.order_index,
+                        image_path: accItem.image_path,
+                        category: 'accessories'
                     };
                 }
             }
