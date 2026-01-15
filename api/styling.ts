@@ -129,8 +129,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!user_id) {
             return res.status(400).json({ error: 'user_id is required' });
         }
-        if (!outfit_count || outfit_count < 1 || outfit_count > 10) {
-            return res.status(400).json({ error: 'outfit_count must be between 1 and 10' });
+        if (!outfit_count || outfit_count < 1 || outfit_count > 100) {
+            return res.status(400).json({ error: 'outfit_count must be between 1 and 100' });
         }
 
         // Fetch wardrobe items from database
