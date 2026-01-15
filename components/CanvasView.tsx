@@ -280,17 +280,6 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                         className="!bg-card-dark !border-border-dark !rounded-lg"
                         style={{ width: 120, height: 80 }}
                     />
-
-                    {/* Empty State */}
-                    {nodes.length === 0 && (
-                        <Panel position="top-left" className="!left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2">
-                            <div className="text-center text-text-muted bg-card-dark/80 backdrop-blur-md p-8 rounded-2xl border border-border-dark">
-                                <Layers className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                                <p className="text-xl font-bold text-white/60 mb-2">Canvas is empty</p>
-                                <p className="text-sm max-w-xs">Click items from the left panel to add them to your canvas</p>
-                            </div>
-                        </Panel>
-                    )}
                 </ReactFlow>
             </div>
         </div>
