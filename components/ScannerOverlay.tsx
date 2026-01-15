@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Scan, Check, X, Move } from 'lucide-react';
 
 interface ScannerOverlayProps {
-  onConfirm: (prompt?: string) => void;
+  onConfirm: (prompt?: string) => Promise<void> | void;
   onCancel: () => void;
 }
 
@@ -10,6 +10,7 @@ export const ScannerOverlay: React.FC<ScannerOverlayProps> = ({ onConfirm, onCan
   // Prompt input state
   const [step, setStep] = useState<'scan' | 'prompt'>('scan');
   const [userPrompt, setUserPrompt] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Initial box state (centered, rough size)
   const [box, setBox] = useState({ x: 10, y: 10, w: 80, h: 80 }); // Percentages
@@ -84,8 +85,9 @@ export const ScannerOverlay: React.FC<ScannerOverlayProps> = ({ onConfirm, onCan
     setStep('prompt');
   };
 
-  const handleFinalConfirm = () => {
-    onConfirm(userPrompt);
+  const handleFinalConfirm = async () => {
+    setIsProcessing(true);
+    await onConfirm(userPrompt);
   };
 
   return (
@@ -196,10 +198,20 @@ export const ScannerOverlay: React.FC<ScannerOverlayProps> = ({ onConfirm, onCan
               </button>
               <button
                 onClick={handleFinalConfirm}
-                className="flex-[2] py-3 bg-primary hover:bg-primary-hover text-background-dark rounded-lg font-bold flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(249,220,141,0.3)] transition-all"
+                disabled={isProcessing}
+                className="flex-[2] py-3 bg-primary hover:bg-primary-hover text-background-dark rounded-lg font-bold flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(249,220,141,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Check className="w-4 h-4" />
-                Generate Outfits
+                {isProcessing ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-background-dark border-t-transparent rounded-full animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Generate Outfits
+                  </>
+                )}
               </button>
             </div>
           </div>
