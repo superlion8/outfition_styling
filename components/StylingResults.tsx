@@ -389,18 +389,18 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
               </div>
 
               {/* Row: Reason */}
-              <div style={gridStyle} className="mb-2 items-start group/row">
-                <div className="text-right text-text-muted text-[10px] font-bold uppercase tracking-widest pt-1 pointer-events-none select-none">AI Insight</div>
+              <div style={gridStyle} className="mb-4 items-start group/row">
+                <div className="text-right text-text-muted text-xs font-bold uppercase tracking-widest pt-2 pointer-events-none select-none">AI Insight</div>
                 {outfits.map((outfit, i) => (
                   <div key={`reason-${i}`} className="px-1">
                     {outfit.reason ? (
-                      <div className="bg-primary/5 border border-primary/20 rounded-md p-2 min-h-[40px] flex items-center">
-                        <p className="text-primary text-[10px] leading-tight font-medium">
+                      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 min-h-[60px] flex items-center">
+                        <p className="text-primary text-sm leading-relaxed font-medium">
                           {outfit.reason}
                         </p>
                       </div>
                     ) : (
-                      <div className="min-h-[40px]"></div>
+                      <div className="min-h-[60px]"></div>
                     )}
                   </div>
                 ))}
