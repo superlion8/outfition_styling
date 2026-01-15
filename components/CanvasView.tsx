@@ -112,7 +112,7 @@ const ModelSelectorNode: React.FC<NodeProps<Node<ModelSelectorData>>> = ({ id, d
                 relative bg-card-dark rounded-xl overflow-hidden border-2 transition-all duration-200 shadow-2xl
                 ${selected ? 'border-primary ring-4 ring-primary/30' : 'border-border-dark'}
             `}
-            style={{ width: 200, height: 300 }}
+            style={{ width: 180, height: 320 }}
         >
             {/* Header Badge */}
             <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full border border-white/10">
