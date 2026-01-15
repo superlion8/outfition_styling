@@ -41,13 +41,9 @@ async function callVertexAI(modelId: string, contents: any[], config?: any): Pro
 }
 
 // Types
-interface CanvasStylingItem {
-    index: number;
-    imageUrl: string;
-}
-
 interface CanvasStylingRequest {
-    items: CanvasStylingItem[];
+    screenshot: string;  // base64 screenshot with index overlays
+    itemCount: number;   // total number of items in screenshot
     outfitCount: number;
     userPrompt?: string;
 }
@@ -57,13 +53,6 @@ interface CanvasOutfitResult {
     reason: string;
 }
 
-// Helper: Convert image URL to base64
-async function urlToBase64(url: string): Promise<string> {
-    const response = await fetch(url);
-    const buffer = await response.arrayBuffer();
-    return Buffer.from(buffer).toString('base64');
-}
-
 // Main handler
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
@@ -71,43 +60,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const { items, outfitCount, userPrompt }: CanvasStylingRequest = req.body;
+        const { screenshot, itemCount, outfitCount, userPrompt }: CanvasStylingRequest = req.body;
 
         // Validate
-        if (!items || items.length < 2) {
+        if (!screenshot) {
+            return res.status(400).json({ error: 'Screenshot is required' });
+        }
+        if (!itemCount || itemCount < 2) {
             return res.status(400).json({ error: 'At least 2 items are required' });
         }
         if (!outfitCount || outfitCount < 1 || outfitCount > 10) {
             return res.status(400).json({ error: 'outfitCount must be between 1 and 10' });
         }
 
-        // Build prompt with images
+        // Build prompt with screenshot
         const promptParts: any[] = [];
 
         promptParts.push({
-            text: `你是一位专业的时尚搭配师。我将提供 ${items.length} 件服装单品图片，每件都有一个编号 (#1, #2, ...)。
+            text: `你是一位专业的时尚搭配师。我将提供一张服装单品截图，图中包含 ${itemCount} 件服装单品。
+每件单品左上角都有一个紫色编号标签 (#1, #2, #3...)。
 
-请根据这些单品为我搭配 ${outfitCount} 组完整的穿搭方案。
+请仔细观察截图中的所有单品，根据编号为我搭配 ${outfitCount} 组完整的穿搭方案。
 
-**服装单品列表：**
+**服装单品截图：**
 `
         });
 
-        // Add each item image with index
-        for (const item of items) {
-            promptParts.push({ text: `\n单品 #${item.index}:` });
-            try {
-                const base64 = await urlToBase64(item.imageUrl);
-                promptParts.push({
-                    inlineData: {
-                        mimeType: 'image/jpeg',
-                        data: base64
-                    }
-                });
-            } catch (e) {
-                console.error(`Failed to load image #${item.index}:`, e);
+        // Add screenshot image
+        const base64Data = screenshot.replace(/^data:image\/\w+;base64,/, "");
+        promptParts.push({
+            inlineData: {
+                mimeType: 'image/png',
+                data: base64Data
             }
-        }
+        });
 
         // Add user prompt if provided
         if (userPrompt) {
@@ -141,7 +127,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   ]
 }
 
-注意：selectedIndices 数组包含选中单品的编号 (#1, #2, ... 对应 1, 2, ...)。`
+注意：selectedIndices 数组包含选中单品的编号 (#1, #2, ... 对应数字 1, 2, ...)。`
         });
 
         // Call Gemini API

@@ -358,19 +358,50 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
     // Generate styling via API and create whiteboards
     const handleGenerateStyling = useCallback(async () => {
-        if (stylingItems.length < 2) return;
+        if (stylingItems.length < 2 || !reactFlowWrapper.current) return;
 
         setStylingStep('generating');
 
         try {
+            // Step 1: Temporarily add index overlays to selected nodes
+            const indexOverlays: HTMLDivElement[] = [];
+            const reactFlowViewport = reactFlowWrapper.current.querySelector('.react-flow__viewport');
+
+            if (reactFlowViewport) {
+                stylingItems.forEach(item => {
+                    const nodeEl = reactFlowWrapper.current?.querySelector(`[data-id="${item.nodeId}"]`);
+                    if (nodeEl) {
+                        const overlay = document.createElement('div');
+                        overlay.style.cssText = `
+                            position: absolute; top: 0; left: 0; z-index: 9999;
+                            background: #8c30e8; color: #000; font-weight: bold; font-size: 12px;
+                            padding: 2px 6px; border-radius: 0 0 6px 0;
+                        `;
+                        overlay.textContent = `#${item.index}`;
+                        nodeEl.appendChild(overlay);
+                        indexOverlays.push(overlay);
+                    }
+                });
+            }
+
+            // Step 2: Capture screenshot
+            const html2canvas = (await import('html2canvas')).default;
+            const canvas = await html2canvas(reactFlowWrapper.current, {
+                backgroundColor: '#1a1625',
+                scale: 2,
+            });
+            const screenshot = canvas.toDataURL('image/png');
+
+            // Step 3: Remove overlays
+            indexOverlays.forEach(el => el.remove());
+
+            // Step 4: Call API with screenshot
             const response = await fetch('/api/canvas-styling', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    items: stylingItems.map(item => ({
-                        index: item.index,
-                        imageUrl: item.imageUrl,
-                    })),
+                    screenshot,
+                    itemCount: stylingItems.length,
                     outfitCount: stylingOutfitCount,
                     userPrompt: stylingPrompt || undefined,
                 }),
