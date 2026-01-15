@@ -112,7 +112,7 @@ const ModelSelectorNode: React.FC<NodeProps<Node<ModelSelectorData>>> = ({ data,
                 relative bg-card-dark rounded-xl overflow-hidden border-2 transition-all duration-200 shadow-2xl
                 ${selected ? 'border-primary ring-4 ring-primary/30' : 'border-border-dark'}
             `}
-            style={{ width: 160, height: 240 }}
+            style={{ width: 200, height: 300 }}
         >
             {/* Header Badge */}
             <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full border border-white/10">
@@ -128,10 +128,10 @@ const ModelSelectorNode: React.FC<NodeProps<Node<ModelSelectorData>>> = ({ data,
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
                 {/* Customize Button */}
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-white/15 backdrop-blur-md border border-white/20 rounded-lg text-white text-[10px] font-bold flex items-center gap-1.5">
-                    <Settings2 className="w-3 h-3" />
+                <button className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 rounded-lg text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap transition-colors cursor-pointer">
+                    <Settings2 className="w-3.5 h-3.5" />
                     Customize Avatar
-                </div>
+                </button>
             </div>
         </div>
     );
