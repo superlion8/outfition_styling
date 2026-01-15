@@ -523,8 +523,8 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
 
       {/* Model Selector Modal */}
       {isModelSelectorOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-card-dark border border-border-dark rounded-2xl w-full max-w-4xl p-6 relative shadow-2xl animate-in zoom-in-95 duration-200 h-[80vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+          <div className="bg-card-dark border border-border-dark rounded-2xl w-full max-w-[95vw] xl:max-w-[1600px] p-6 relative shadow-2xl animate-in zoom-in-95 duration-200 h-[90vh] flex flex-col">
 
             {/* Header */}
             <div className="flex justify-between items-center mb-6 shrink-0">
@@ -586,7 +586,7 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
 
             {/* Grid */}
             <div className="flex-1 overflow-y-auto min-h-0 -mr-2 pr-2">
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-4">
                 {filteredModels.map((model) => (
                   <div
                     key={model._id}
