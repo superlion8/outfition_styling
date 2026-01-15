@@ -72,7 +72,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         setNodes((nds) => {
             const nodeWidth = 50;
             const nodeHeight = 60;
-            const gap = 10;
+            const gap = 4;
             const cols = 10; // 10 columns per row
             const startX = 50;
             const startY = 50;
