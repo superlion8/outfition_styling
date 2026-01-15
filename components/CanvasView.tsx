@@ -182,6 +182,18 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
     const [ethnicityFilter, setEthnicityFilter] = useState('All');
     const [genderFilter, setGenderFilter] = useState('All');
 
+    // Go Styling state
+    type StylingStep = 'idle' | 'config' | 'generating';
+    interface CanvasStylingItem {
+        index: number;
+        nodeId: string;
+        imageUrl: string;
+    }
+    const [stylingStep, setStylingStep] = useState<StylingStep>('idle');
+    const [stylingItems, setStylingItems] = useState<CanvasStylingItem[]>([]);
+    const [stylingOutfitCount, setStylingOutfitCount] = useState(3);
+    const [stylingPrompt, setStylingPrompt] = useState('');
+
     // Listen for model selector open event from nodes
     useEffect(() => {
         const handleOpenModelSelector = (e: CustomEvent<{ nodeId: string }>) => {
@@ -320,6 +332,29 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             setSelectedNodes([]);
         }
     }, [setNodes, setEdges]);
+
+    // Start Go Styling flow
+    const handleStartStyling = useCallback(() => {
+        // Get selected canvasItem nodes (images only, not whiteboards/models)
+        const selectedImageNodes = nodes.filter(
+            n => selectedNodes.includes(n.id) && n.type === 'canvasItem'
+        );
+
+        if (selectedImageNodes.length < 2) {
+            alert('Please select at least 2 images for styling');
+            return;
+        }
+
+        // Build styling items with index
+        const items: CanvasStylingItem[] = selectedImageNodes.map((node, idx) => ({
+            index: idx + 1,
+            nodeId: node.id,
+            imageUrl: (node.data as CanvasItemData).imageUrl,
+        }));
+
+        setStylingItems(items);
+        setStylingStep('config');
+    }, [nodes, selectedNodes]);
 
     // Export canvas
     const handleExport = useCallback(async () => {
@@ -560,7 +595,102 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                         style={{ width: 120, height: 80 }}
                     />
                 </ReactFlow>
+
+                {/* Go Styling Button - visible when ≥2 images selected */}
+                {selectedNodes.filter(id => nodes.find(n => n.id === id)?.type === 'canvasItem').length >= 2 && stylingStep === 'idle' && (
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
+                        <button
+                            onClick={handleStartStyling}
+                            className="px-6 py-3 bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90 text-white rounded-full font-bold text-sm flex items-center gap-2 shadow-xl transition-all hover:scale-105"
+                        >
+                            <Sparkles className="w-5 h-5" />
+                            Go Styling ({selectedNodes.filter(id => nodes.find(n => n.id === id)?.type === 'canvasItem').length} items)
+                        </button>
+                    </div>
+                )}
             </div>
+
+            {/* Styling Config Modal */}
+            {stylingStep === 'config' && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-card-dark border border-border-dark rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center gap-3">
+                                <Sparkles className="w-5 h-5 text-primary" />
+                                <h3 className="text-lg font-bold text-white">Configure Styling</h3>
+                            </div>
+                            <button
+                                onClick={() => { setStylingStep('idle'); setStylingItems([]); }}
+                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5 text-text-muted" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                                <span className="text-sm text-text-muted">Selected Items</span>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    {stylingItems.map(item => (
+                                        <div key={item.nodeId} className="relative w-12 h-14 rounded-lg overflow-hidden border border-white/20">
+                                            <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
+                                            <div className="absolute top-0 left-0 bg-primary text-black text-[10px] font-bold px-1.5 py-0.5 rounded-br-lg">
+                                                {item.index}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-text-muted mb-2">Number of Outfits</label>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={10}
+                                    value={stylingOutfitCount}
+                                    onChange={(e) => setStylingOutfitCount(Math.max(1, Math.min(10, Number(e.target.value))))}
+                                    className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-2 text-white outline-none focus:border-primary"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-text-muted mb-2">Additional Requirements (optional)</label>
+                                <textarea
+                                    value={stylingPrompt}
+                                    onChange={(e) => setStylingPrompt(e.target.value)}
+                                    placeholder="e.g., casual style, warm colors..."
+                                    className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-3 text-white outline-none focus:border-primary resize-none h-24"
+                                />
+                            </div>
+
+                            <button
+                                onClick={() => {
+                                    setStylingStep('generating');
+                                    // TODO: Call API and process results
+                                    console.log('Generate styling with:', { items: stylingItems, outfitCount: stylingOutfitCount, prompt: stylingPrompt });
+                                    setTimeout(() => setStylingStep('idle'), 2000); // Placeholder
+                                }}
+                                className="w-full py-3 bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90 text-white rounded-lg font-bold flex items-center justify-center gap-2 transition-colors"
+                            >
+                                <Sparkles className="w-4 h-4" />
+                                Generate {stylingOutfitCount} Outfit{stylingOutfitCount > 1 ? 's' : ''}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Styling Generating Overlay */}
+            {stylingStep === 'generating' && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                    <div className="text-center">
+                        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                        <p className="text-white font-bold text-lg">Generating Outfits...</p>
+                        <p className="text-text-muted text-sm mt-2">AI is analyzing your wardrobe</p>
+                    </div>
+                </div>
+            )}
 
             {/* Model Selector Modal */}
             {isModelSelectorOpen && (
