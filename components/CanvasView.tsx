@@ -81,15 +81,14 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         setNodes((nds) => [...nds, newNode]);
     }, [setNodes]);
 
-    // Handle file upload with compression
+    // Handle file upload with compression (parallel)
     const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files) return;
 
-        for (const file of Array.from(files)) {
-            if (!file.type.startsWith('image/')) continue;
+        const processFile = async (file: File) => {
+            if (!file.type.startsWith('image/')) return;
             try {
-                // Compress image for performance
                 const compressed = await imageCompression(file, {
                     maxSizeMB: 0.5,
                     maxWidthOrHeight: 400,
@@ -105,7 +104,10 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             } catch (err) {
                 console.error('Image compression failed:', err);
             }
-        }
+        };
+
+        // Process all files in parallel
+        await Promise.all(Array.from(files).map(processFile));
     }, [handleAddItem]);
 
     // Delete selected
@@ -156,14 +158,14 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         });
         return grouped;
     }, [wardrobeItems]);
-    // Handle drag and drop files onto canvas with compression
+    // Handle drag and drop files onto canvas with compression (parallel)
     const handleCanvasDrop = useCallback(async (e: React.DragEvent) => {
         e.preventDefault();
         const files = e.dataTransfer.files;
         if (!files || files.length === 0) return;
 
-        for (const file of Array.from(files)) {
-            if (!file.type.startsWith('image/')) continue;
+        const processFile = async (file: File) => {
+            if (!file.type.startsWith('image/')) return;
             try {
                 const compressed = await imageCompression(file, {
                     maxSizeMB: 0.5,
@@ -180,7 +182,10 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             } catch (err) {
                 console.error('Image compression failed:', err);
             }
-        }
+        };
+
+        // Process all files in parallel
+        await Promise.all(Array.from(files).map(processFile));
     }, [handleAddItem]);
 
     const handleCanvasDragOver = useCallback((e: React.DragEvent) => {
