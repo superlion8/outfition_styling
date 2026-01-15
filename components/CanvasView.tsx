@@ -67,18 +67,31 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
     const [activeTool, setActiveTool] = useState<'select' | 'pan'>('select');
     const [assetTab, setAssetTab] = useState<'wardrobe' | 'uploads' | 'templates'>('wardrobe');
 
-    // Add item to canvas
+    // Add item to canvas with grid layout
     const handleAddItem = useCallback((imageUrl: string, label: string, type: CanvasItemData['type']) => {
-        const newNode: Node<CanvasItemData> = {
-            id: `node-${Date.now()}`,
-            type: 'canvasItem',
-            position: {
-                x: 200 + Math.random() * 300,
-                y: 100 + Math.random() * 200,
-            },
-            data: { imageUrl, label, type },
-        };
-        setNodes((nds) => [...nds, newNode]);
+        setNodes((nds) => {
+            const nodeWidth = 50;
+            const nodeHeight = 60;
+            const gap = 10;
+            const cols = 10; // 10 columns per row
+            const startX = 50;
+            const startY = 50;
+
+            const index = nds.length;
+            const col = index % cols;
+            const row = Math.floor(index / cols);
+
+            const newNode: Node<CanvasItemData> = {
+                id: `node-${Date.now()}-${index}`,
+                type: 'canvasItem',
+                position: {
+                    x: startX + col * (nodeWidth + gap),
+                    y: startY + row * (nodeHeight + gap),
+                },
+                data: { imageUrl, label, type },
+            };
+            return [...nds, newNode];
+        });
     }, [setNodes]);
 
     // Handle file upload with compression (parallel)
