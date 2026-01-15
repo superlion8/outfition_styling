@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { RefreshCw, Heart, Wand2, User, Settings2, Check, X, Sparkles, Loader2 } from 'lucide-react';
+import { RefreshCw, Heart, Wand2, User, Settings2, Check, X, Sparkles, Loader2, ZoomIn, Download } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { MOCK_IMAGES, MODELS } from '../constants';
 import { WardrobeItem } from '../types';
@@ -130,6 +130,7 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+  const [previewImage, setPreviewImage] = useState<string | undefined>(undefined);
 
   // Model State
   const [currentModel, setCurrentModel] = useState(MODELS[0]);
@@ -214,10 +215,12 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
         bottom?: ReturnType<typeof mapToOutfitItem>;
         accessory?: ReturnType<typeof mapToOutfitItem>;
         onepiece?: ReturnType<typeof mapToOutfitItem>;
+        model_image_url?: string;
       } = {
         top: mapToOutfitItem(topItem),
         bottom: mapToOutfitItem(bottomItem),
-        accessory: mapToOutfitItem(accessoryItem)
+        accessory: mapToOutfitItem(accessoryItem),
+        model_image_url: currentModel.imageUrl
       };
 
       // Correction: If the item in 'tops' slot is actually a 'onepiece', put it in onepiece field
@@ -412,14 +415,38 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
                     {outfit.generatedImage ? (
                       <div className="relative w-full h-full rounded-lg overflow-hidden border border-primary/30 group/result animate-in fade-in zoom-in-95 duration-500">
                         <img src={outfit.generatedImage} alt="Generated Look" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/result:opacity-100 transition-opacity flex items-center justify-center">
+
+                        {/* Hover Overlay */}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/result:opacity-100 transition-opacity flex items-center justify-center gap-3">
+
+                          {/* Zoom Button */}
+                          <button
+                            onClick={() => setPreviewImage(outfit.generatedImage)}
+                            className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 p-2.5 rounded-full transition-transform hover:scale-110"
+                            title="Zoom In"
+                          >
+                            <ZoomIn className="w-5 h-5" />
+                          </button>
+
+                          {/* Regenerate Button */}
                           <button
                             onClick={() => handleGenerateLook(i)}
-                            className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 p-2 rounded-full transition-transform hover:scale-110"
+                            className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 p-2.5 rounded-full transition-transform hover:scale-110"
                             title="Regenerate"
                           >
                             <RefreshCw className="w-4 h-4" />
                           </button>
+
+                          {/* Download Button (Top Right) */}
+                          <a
+                            href={outfit.generatedImage}
+                            download={`outfit-look-${i + 1}.jpg`}
+                            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-lg backdrop-blur-sm transition-colors"
+                            title="Download"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Download className="w-4 h-4" />
+                          </a>
                         </div>
                       </div>
                     ) : (
@@ -490,6 +517,33 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
         </div>
       )}
 
+      {/* Lightbox Modal */}
+      {previewImage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setPreviewImage(undefined)}>
+          {/* Close Button */}
+          <button
+            className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+            onClick={() => setPreviewImage(undefined)}
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {/* Download Button */}
+          <a
+            href={previewImage}
+            download="generated-look.jpg"
+            className="absolute top-6 right-20 p-2 bg-primary hover:bg-primary-hover rounded-full text-black transition-colors flex items-center gap-2 px-4 font-bold text-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Download className="w-4 h-4" />
+            Download
+          </a>
+
+          <div className="relative max-w-[90vw] max-h-[90vh] rounded-lg overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <img src={previewImage} alt="Preview" className="w-full h-full object-contain max-h-[90vh]" />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

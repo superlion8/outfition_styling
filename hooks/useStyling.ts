@@ -107,7 +107,8 @@ export function useStyling(): UseStylingReturn {
                     items: items.map(item => ({
                         image_path: item.image_path,
                         category: item.category
-                    }))
+                    })),
+                    model_image_url: (outfit as any).model_image_url
                 })
             });
 

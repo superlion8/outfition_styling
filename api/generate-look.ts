@@ -93,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const { items, model_description } = req.body;
+        const { items, model_description, model_image_url } = req.body;
 
         if (!items || !Array.isArray(items) || items.length === 0) {
             return res.status(400).json({ error: 'Please provide at least one item' });
@@ -103,6 +103,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // Prepare Prompt Parts
         const promptParts: any[] = [];
+
+        // Add Model Image (High priority context)
+        if (model_image_url) {
+            try {
+                console.log("Processing model image...");
+                const modelBase64 = await urlToBase64(model_image_url);
+                promptParts.push({
+                    text: `\nTarget Model Reference (Generate a model looking similar to this one, maintaining ethnicity, body type, and hair):`
+                });
+                promptParts.push({
+                    inlineData: {
+                        mimeType: 'image/jpeg',
+                        data: modelBase64
+                    }
+                });
+            } catch (e) {
+                console.error("Failed to process model image", e);
+            }
+        }
         let outfitDesc = "";
 
         // Text Prompt using template from model_prompts.ts (hardcoded here to avoid import issues)
