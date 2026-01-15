@@ -36,14 +36,10 @@ function App() {
     setCurrentView(AppView.SCANNING);
   };
 
-  const confirmScan = async () => {
+  const confirmScan = () => {
     setCurrentView(AppView.LOADING);
-
-    // Call the styling API
-    await generateOutfits(outfitCount);
-
-    // Move to results view after generation completes
-    setCurrentView(AppView.RESULTS);
+    // Start the styling API call (don't await - LoadingOverlay watches isGenerating)
+    generateOutfits(outfitCount);
   };
 
   const cancelProcessing = () => {
@@ -88,7 +84,11 @@ function App() {
       <div className="fixed top-1/4 -right-24 size-[400px] bg-primary/5 blur-[100px] rounded-full -z-10 pointer-events-none"></div>
 
       {currentView === AppView.LOADING && (
-        <LoadingOverlay onCancel={cancelProcessing} onComplete={completeProcessing} />
+        <LoadingOverlay
+          onCancel={cancelProcessing}
+          onComplete={completeProcessing}
+          isApiComplete={!isGenerating && generatedOutfits.length > 0}
+        />
       )}
 
       {currentView === AppView.SCANNING && (
