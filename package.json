@@ -12,6 +12,7 @@
     "@google/genai": "^1.36.0",
     "@supabase/supabase-js": "^2.45.0",
     "@xyflow/react": "^12.10.0",
+    "browser-image-compression": "^2.0.2",
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.562.0",
     "react": "^19.2.3",

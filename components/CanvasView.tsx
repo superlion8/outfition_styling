@@ -13,6 +13,7 @@ import {
     NodeProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import imageCompression from 'browser-image-compression';
 import {
     ArrowLeft, Plus, Upload, FolderOpen, Shirt, Image as ImageIcon,
     ZoomIn, ZoomOut, Maximize2, Trash2, Download, Sparkles, MousePointer2,
@@ -40,12 +41,9 @@ const CanvasItemNode: React.FC<NodeProps<Node<CanvasItemData>>> = ({ data, selec
             <img
                 src={data.imageUrl}
                 alt={data.label}
-                className="w-full h-full object-contain bg-white/5"
+                className="w-full h-full object-contain"
                 draggable={false}
             />
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-1 py-0.5">
-                <span className="text-white text-[9px] font-medium truncate block">{data.label}</span>
-            </div>
         </div>
     );
 };
@@ -83,20 +81,31 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         setNodes((nds) => [...nds, newNode]);
     }, [setNodes]);
 
-    // Handle file upload
-    const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    // Handle file upload with compression
+    const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files) return;
 
-        Array.from(files).forEach((file, index) => {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                if (event.target?.result) {
-                    handleAddItem(event.target.result as string, file.name, 'upload');
-                }
-            };
-            reader.readAsDataURL(file);
-        });
+        for (const file of Array.from(files)) {
+            if (!file.type.startsWith('image/')) continue;
+            try {
+                // Compress image for performance
+                const compressed = await imageCompression(file, {
+                    maxSizeMB: 0.5,
+                    maxWidthOrHeight: 400,
+                    useWebWorker: true,
+                });
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    if (event.target?.result) {
+                        handleAddItem(event.target.result as string, '', 'upload');
+                    }
+                };
+                reader.readAsDataURL(compressed);
+            } catch (err) {
+                console.error('Image compression failed:', err);
+            }
+        }
     }, [handleAddItem]);
 
     // Delete selected
@@ -147,22 +156,31 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         });
         return grouped;
     }, [wardrobeItems]);
-    // Handle drag and drop files onto canvas
-    const handleCanvasDrop = useCallback((e: React.DragEvent) => {
+    // Handle drag and drop files onto canvas with compression
+    const handleCanvasDrop = useCallback(async (e: React.DragEvent) => {
         e.preventDefault();
         const files = e.dataTransfer.files;
         if (!files || files.length === 0) return;
 
-        Array.from(files).forEach((file) => {
-            if (!file.type.startsWith('image/')) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                if (event.target?.result) {
-                    handleAddItem(event.target.result as string, file.name, 'upload');
-                }
-            };
-            reader.readAsDataURL(file);
-        });
+        for (const file of Array.from(files)) {
+            if (!file.type.startsWith('image/')) continue;
+            try {
+                const compressed = await imageCompression(file, {
+                    maxSizeMB: 0.5,
+                    maxWidthOrHeight: 400,
+                    useWebWorker: true,
+                });
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    if (event.target?.result) {
+                        handleAddItem(event.target.result as string, '', 'upload');
+                    }
+                };
+                reader.readAsDataURL(compressed);
+            } catch (err) {
+                console.error('Image compression failed:', err);
+            }
+        }
     }, [handleAddItem]);
 
     const handleCanvasDragOver = useCallback((e: React.DragEvent) => {
