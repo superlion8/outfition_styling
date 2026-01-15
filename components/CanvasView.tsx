@@ -17,7 +17,7 @@ import imageCompression from 'browser-image-compression';
 import {
     ArrowLeft, Plus, Upload, FolderOpen, Shirt, Image as ImageIcon,
     ZoomIn, ZoomOut, Maximize2, Trash2, Download, Sparkles, MousePointer2,
-    Hand, Type, Layers
+    Hand, Type, Layers, SquareDashed
 } from 'lucide-react';
 import { WardrobeItem } from '../types';
 
@@ -48,8 +48,31 @@ const CanvasItemNode: React.FC<NodeProps<Node<CanvasItemData>>> = ({ data, selec
     );
 };
 
+// Whiteboard Node (container for grouping items)
+interface WhiteboardData {
+    label: string;
+    [key: string]: unknown;
+}
+
+const WhiteboardNode: React.FC<NodeProps<Node<WhiteboardData>>> = ({ data, selected }) => {
+    return (
+        <div
+            className={`
+                bg-white rounded-xl shadow-2xl border-2 transition-all duration-200
+                ${selected ? 'border-primary ring-4 ring-primary/30' : 'border-gray-200'}
+            `}
+            style={{ width: 300, height: 400, minWidth: 200, minHeight: 200 }}
+        >
+            <div className="absolute top-2 left-3 text-gray-400 text-xs font-medium">
+                {data.label || 'Whiteboard'}
+            </div>
+        </div>
+    );
+};
+
 const nodeTypes = {
     canvasItem: CanvasItemNode,
+    whiteboard: WhiteboardNode,
 };
 
 interface CanvasViewProps {
@@ -95,6 +118,18 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             return [...nds, newNode];
         });
     }, [setNodes]);
+
+    // Add whiteboard to canvas
+    const handleAddWhiteboard = useCallback(() => {
+        const newNode: Node<WhiteboardData> = {
+            id: `whiteboard-${Date.now()}`,
+            type: 'whiteboard',
+            position: { x: 0, y: 0 },
+            data: { label: `Board ${nodes.filter(n => n.type === 'whiteboard').length + 1}` },
+            style: { zIndex: -1 }, // Behind other nodes
+        };
+        setNodes((nds) => [...nds, newNode]);
+    }, [setNodes, nodes]);
 
     // Handle file upload with compression (parallel)
     const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -258,6 +293,14 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
                 {/* Right - Actions */}
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleAddWhiteboard}
+                        className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-bold text-sm flex items-center gap-2 transition-colors border border-border-dark"
+                        title="Add a whiteboard container"
+                    >
+                        <SquareDashed className="w-4 h-4" />
+                        Whiteboard
+                    </button>
                     <button
                         onClick={() => fileInputRef.current?.click()}
                         className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-bold text-sm flex items-center gap-2 transition-colors border border-border-dark"
