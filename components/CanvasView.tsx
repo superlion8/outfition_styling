@@ -128,7 +128,15 @@ const ModelSelectorNode: React.FC<NodeProps<Node<ModelSelectorData>>> = ({ data,
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
                 {/* Customize Button */}
-                <button className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 rounded-lg text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap transition-colors cursor-pointer">
+                <button
+                    className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 rounded-lg text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap transition-colors cursor-pointer"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        // TODO: Open model selector modal
+                        console.log('Customize Avatar clicked');
+                    }}
+                >
                     <Settings2 className="w-3.5 h-3.5" />
                     Customize Avatar
                 </button>
