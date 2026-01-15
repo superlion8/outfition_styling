@@ -71,10 +71,11 @@ interface StylingRequest {
 }
 
 interface OutfitResult {
-    top?: { id: string; image_url: string; order_index: number };
-    bottom?: { id: string; image_url: string; order_index: number };
-    onepiece?: { id: string; image_url: string; order_index: number };
-    accessory?: { id: string; image_url: string; order_index: number };
+    top?: { id: string; image_url: string; order_index: number; image_path: string; category: string };
+    bottom?: { id: string; image_url: string; order_index: number; image_path: string; category: string };
+    onepiece?: { id: string; image_url: string; order_index: number; image_path: string; category: string };
+    accessory?: { id: string; image_url: string; order_index: number; image_path: string; category: string };
+    reason?: string;
 }
 
 interface VLMOutfitResponse {
