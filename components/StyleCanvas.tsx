@@ -147,6 +147,9 @@ const ZoneCard: React.FC<ZoneCardProps> = ({
               className="relative aspect-square rounded-lg bg-cover bg-center border border-border-dark overflow-hidden group/item cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors"
               style={{ backgroundImage: `url('${item.imageUrl}')` }}
             >
+              <div className="absolute top-1 left-1 bg-black/60 backdrop-blur-sm text-white text-[10px] font-mono px-1.5 py-0.5 rounded-full z-10 pointer-events-none">
+                #{item.order_index}
+              </div>
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-start justify-end p-2 pointer-events-none">
                 <button
                   onClick={(e) => {
@@ -268,7 +271,7 @@ export const StyleCanvas: React.FC<StyleCanvasProps> = ({
       </div>
 
       {/* Styling Canvas Quadrants - Reverted to 2x2 Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[600px] mb-12">
+      <div id="style-canvas-area" className="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[600px] mb-12">
         <ZoneCard
           title="Tops"
           category="tops"

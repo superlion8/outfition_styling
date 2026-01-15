@@ -66,6 +66,7 @@ interface WardrobeItem {
 interface StylingRequest {
     user_id: string;
     outfit_count: number;
+    screenshot?: string;
 }
 
 interface OutfitResult {
@@ -170,17 +171,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // Build prompt with images
         const promptParts: any[] = [];
+        const { screenshot } = req.body;
 
         // Add instruction
-        promptParts.push({
-            text: `你是一位专业的时尚搭配师。我将提供我的衣橱单品图片，请根据这些单品为我搭配 ${outfit_count} 组完整的穿搭方案。
+        if (screenshot) {
+            console.log("Using provided screenshot for styling analysis...");
+            promptParts.push({
+                text: `你是一位专业的时尚搭配师。我将提供我的衣橱单品截屏（Screenshot）。
+图里包含了所有的上装、下装、连体装和配饰。
+每个单品上都有一个带编号的标签（Order Index，例如 #1, #2...）。
 
+请仔细分析图片中的所有单品，并根据编号为我搭配 ${outfit_count} 组完整的穿搭方案。
+
+**衣橱全景图 (Wardrobe Screenshot):**
+`
+            });
+
+            const base64Data = screenshot.replace(/^data:image\/\w+;base64,/, "");
+            promptParts.push({
+                inlineData: {
+                    mimeType: 'image/jpeg',
+                    data: base64Data
+                }
+            });
+
+            promptParts.push({
+                text: `\n\n请注意：\n1. 所有单品都在上面的每一幅图中。\n2. 单品按照类别排列 (Tops, Bottoms, One-Piece, Accessories)。\n3. 请根据单品上的 "#数字" 标签来识别单品。\n`
+            });
+        } else {
+            // FALLBACK: Individual item images
+            promptParts.push({
+                text: `你是一位专业的时尚搭配师。我将提供我的衣橱单品图片，请根据这些单品为我搭配 ${outfit_count} 组完整的穿搭方案。
+            
 **衣橱清单：**
 `
-        });
+            });
+        }
+
+
 
         // Add tops
-        if (itemsByCategory.tops.length > 0) {
+        if (!screenshot && itemsByCategory.tops.length > 0) {
             promptParts.push({ text: `\n上装 (Tops) - 共 ${itemsByCategory.tops.length} 件：` });
             for (const item of itemsByCategory.tops) {
                 const imageUrl = getPublicUrl(item.image_path);
@@ -200,7 +231,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // Add bottoms
-        if (itemsByCategory.bottoms.length > 0) {
+        if (!screenshot && itemsByCategory.bottoms.length > 0) {
             promptParts.push({ text: `\n\n下装 (Bottoms) - 共 ${itemsByCategory.bottoms.length} 件：` });
             for (const item of itemsByCategory.bottoms) {
                 const imageUrl = getPublicUrl(item.image_path);
@@ -220,7 +251,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // Add onepiece
-        if (itemsByCategory.onepiece.length > 0) {
+        if (!screenshot && itemsByCategory.onepiece.length > 0) {
             promptParts.push({ text: `\n\n连体装 (One-Piece) - 共 ${itemsByCategory.onepiece.length} 件：` });
             for (const item of itemsByCategory.onepiece) {
                 const imageUrl = getPublicUrl(item.image_path);
@@ -240,7 +271,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // Add accessories
-        if (itemsByCategory.accessories.length > 0) {
+        if (!screenshot && itemsByCategory.accessories.length > 0) {
             promptParts.push({ text: `\n\n配饰 (Accessories) - 共 ${itemsByCategory.accessories.length} 件：` });
             for (const item of itemsByCategory.accessories) {
                 const imageUrl = getPublicUrl(item.image_path);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import html2canvas from 'html2canvas';
 import { StyleCanvas } from './components/StyleCanvas';
 import { LoadingOverlay } from './components/LoadingOverlay';
 import { StylingResults } from './components/StylingResults';
@@ -38,10 +39,27 @@ function App() {
     setCurrentView(AppView.SCANNING);
   };
 
-  const confirmScan = () => {
+
+  const confirmScan = async () => {
+    // Capture screenshot of the StyleCanvas
+    let screenshotBase64 = undefined;
+    const element = document.getElementById('style-canvas-area');
+    if (element) {
+      try {
+        const canvas = await html2canvas(element, {
+          useCORS: true,
+          scale: 1.5, // Trade-off between quality and size
+          backgroundColor: '#1a1625' // Match background
+        });
+        screenshotBase64 = canvas.toDataURL('image/jpeg', 0.8);
+      } catch (e) {
+        console.error("Failed to capture screenshot", e);
+      }
+    }
+
     setCurrentView(AppView.LOADING);
     // Start the styling API call (don't await - LoadingOverlay watches isGenerating)
-    generateOutfits(outfitCount);
+    generateOutfits(outfitCount, screenshotBase64);
   };
 
   const cancelProcessing = () => {

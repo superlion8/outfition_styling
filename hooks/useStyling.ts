@@ -37,7 +37,7 @@ interface UseStylingReturn {
     isLoading: boolean;
     isGeneratingLook: boolean;
     error: string | null;
-    generateOutfits: (outfitCount: number) => Promise<void>;
+    generateOutfits: (outfitCount: number, screenshot?: string) => Promise<void>;
     generateLook: (outfitIndex: number, outfit: Outfit) => Promise<string | null>;
     clearOutfits: () => void;
 }
@@ -48,7 +48,7 @@ export function useStyling(): UseStylingReturn {
     const [isGeneratingLook, setIsGeneratingLook] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const generateOutfits = useCallback(async (outfitCount: number) => {
+    const generateOutfits = useCallback(async (outfitCount: number, screenshot?: string) => {
         setIsLoading(true);
         setError(null);
 
@@ -62,7 +62,8 @@ export function useStyling(): UseStylingReturn {
                 },
                 body: JSON.stringify({
                     user_id: userId,
-                    outfit_count: outfitCount
+                    outfit_count: outfitCount,
+                    screenshot
                 })
             });
 
