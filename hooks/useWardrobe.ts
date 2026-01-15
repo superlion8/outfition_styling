@@ -19,6 +19,8 @@ function toWardrobeItem(row: WardrobeItemRow): WardrobeItem {
         id: row.id,
         category: row.category,
         imageUrl: getPublicUrl(row.image_path),
+        image_path: row.image_path,
+        order_index: row.order_index,
         name: `${row.category} #${row.order_index}`
     };
 }
