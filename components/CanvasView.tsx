@@ -418,48 +418,63 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 throw new Error('No outfits generated');
             }
 
-            // Create whiteboards for each outfit
-            const whiteboardWidth = 350;
-            const whiteboardHeight = 450;
-            const whiteboardGap = 50;
-            const startX = 400;
-            const startY = 0;
+            // Calculate bounding box of selected items
+            const selectedNodePositions = nodes.filter(n => stylingItems.some(item => item.nodeId === n.id));
+            let maxX = -Infinity;
+            let minY = Infinity;
+            selectedNodePositions.forEach(n => {
+                const nodeWidth = 40; // canvasItem width
+                if (n.position.x + nodeWidth > maxX) maxX = n.position.x + nodeWidth;
+                if (n.position.y < minY) minY = n.position.y;
+            });
+
+            // Create smaller whiteboards arranged vertically in columns
+            const whiteboardWidth = 120;
+            const whiteboardHeight = 150;
+            const whiteboardGapX = 20;
+            const whiteboardGapY = 20;
+            const startX = maxX + 80; // Right of selected items
+            const startY = minY;
+            const maxPerColumn = 4; // Max whiteboards per column
 
             const newNodes: Node[] = [];
 
             result.outfits.forEach((outfit: { selectedIndices: number[]; reason: string }, outfitIdx: number) => {
                 // Create whiteboard
                 const wbId = `styling-wb-${Date.now()}-${outfitIdx}`;
-                const wbX = startX + outfitIdx * (whiteboardWidth + whiteboardGap);
+                const col = Math.floor(outfitIdx / maxPerColumn);
+                const row = outfitIdx % maxPerColumn;
+                const wbX = startX + col * (whiteboardWidth + whiteboardGapX);
+                const wbY = startY + row * (whiteboardHeight + whiteboardGapY);
 
                 newNodes.push({
                     id: wbId,
                     type: 'whiteboard',
-                    position: { x: wbX, y: startY },
+                    position: { x: wbX, y: wbY },
                     data: { label: `Look ${outfitIdx + 1}` },
                     style: { zIndex: -1, width: whiteboardWidth, height: whiteboardHeight },
                 });
 
-                // Add selected images to whiteboard
-                const imageWidth = 70;
-                const imageHeight = 90;
-                const cols = 3;
-                const gap = 10;
-                const offsetY = 40; // Below label
+                // Add selected images to whiteboard (smaller)
+                const imageWidth = 35;
+                const imageHeight = 45;
+                const cols = 2;
+                const gap = 5;
+                const offsetY = 25; // Below label
 
                 outfit.selectedIndices.forEach((idx, imgIdx) => {
                     const item = stylingItems.find(i => i.index === idx);
                     if (!item) return;
 
-                    const col = imgIdx % cols;
-                    const row = Math.floor(imgIdx / cols);
+                    const imgCol = imgIdx % cols;
+                    const imgRow = Math.floor(imgIdx / cols);
 
                     newNodes.push({
                         id: `styling-img-${Date.now()}-${outfitIdx}-${imgIdx}`,
                         type: 'resizableImage',
                         position: {
-                            x: 20 + col * (imageWidth + gap),
-                            y: offsetY + row * (imageHeight + gap),
+                            x: 10 + imgCol * (imageWidth + gap),
+                            y: offsetY + imgRow * (imageHeight + gap),
                         },
                         data: { imageUrl: item.imageUrl },
                         parentId: wbId,
