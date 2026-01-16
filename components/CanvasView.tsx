@@ -377,41 +377,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
         // Whiteboard sizing
         const whiteboardWidth = 420;
-        const whiteboardHeight = 300;
-        const whiteboardGapX = 25;
-        const whiteboardGapY = 25;
-        const startX = maxX + 100;
-        const startY = minY;
-        const maxPerColumn = 4;
 
-        // Step 1: Create empty whiteboards immediately
-        const whiteboardIds: string[] = [];
-        const emptyWhiteboards: Node[] = [];
-
-        for (let i = 0; i < stylingOutfitCount; i++) {
-            const wbId = `styling-wb-${Date.now()}-${i}`;
-            whiteboardIds.push(wbId);
-            const col = Math.floor(i / maxPerColumn);
-            const row = i % maxPerColumn;
-
-            emptyWhiteboards.push({
-                id: wbId,
-                type: 'whiteboard',
-                position: {
-                    x: startX + col * (whiteboardWidth + whiteboardGapX),
-                    y: startY + row * (whiteboardHeight + whiteboardGapY),
-                },
-                data: { label: `Look ${i + 1}` },
-                style: { zIndex: -1, width: whiteboardWidth, height: whiteboardHeight },
-            });
-        }
-
-        setNodes((nds) => [...nds, ...emptyWhiteboards]);
-
-        // Zoom out and pan to show whiteboards
-        setTimeout(() => {
-            fitView({ padding: 0.2, duration: 500 });
-        }, 100);
 
         try {
             // Step 2: Add index overlays
