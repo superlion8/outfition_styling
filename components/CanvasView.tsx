@@ -373,14 +373,14 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             if (n.position.y < minY) minY = n.position.y;
         });
 
-        // Whiteboard sizing (smaller)
-        const whiteboardWidth = 60;
-        const whiteboardHeight = 75;
-        const whiteboardGapX = 15;
-        const whiteboardGapY = 15;
+        // Whiteboard sizing
+        const whiteboardWidth = 180;
+        const whiteboardHeight = 220;
+        const whiteboardGapX = 20;
+        const whiteboardGapY = 20;
         const startX = maxX + 60;
         const startY = minY;
-        const maxPerColumn = 5;
+        const maxPerColumn = 4;
 
         // Step 1: Create empty whiteboards immediately
         const whiteboardIds: string[] = [];
@@ -464,11 +464,11 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
             // Step 6: Fill whiteboards with items
             const imageNodes: Node[] = [];
-            const imageWidth = 18;
-            const imageHeight = 22;
+            const imageWidth = 80;
+            const imageHeight = 100;
             const cols = 2;
-            const gap = 2;
-            const offsetY = 15;
+            const gap = 5;
+            const offsetY = 25;
 
             result.outfits.forEach((outfit: { selectedIndices: number[]; reason: string }, outfitIdx: number) => {
                 const wbId = whiteboardIds[outfitIdx];
@@ -485,7 +485,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                         id: `styling-img-${Date.now()}-${outfitIdx}-${imgIdx}`,
                         type: 'resizableImage',
                         position: {
-                            x: 5 + imgCol * (imageWidth + gap),
+                            x: 8 + imgCol * (imageWidth + gap),
                             y: offsetY + imgRow * (imageHeight + gap),
                         },
                         data: { imageUrl: item.imageUrl },
