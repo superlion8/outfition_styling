@@ -183,7 +183,8 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
     const [genderFilter, setGenderFilter] = useState('All');
 
     // Go Styling state
-    type StylingStep = 'idle' | 'config' | 'generating';
+    // Go Styling state
+    type StylingStep = 'idle' | 'config' | 'preview' | 'generating';
     interface CanvasStylingItem {
         index: number;
         nodeId: string;
@@ -193,6 +194,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
     const [stylingItems, setStylingItems] = useState<CanvasStylingItem[]>([]);
     const [stylingOutfitCount, setStylingOutfitCount] = useState(3);
     const [stylingPrompt, setStylingPrompt] = useState('');
+    const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
 
     // Listen for model selector open event from nodes
     useEffect(() => {
@@ -423,8 +425,8 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                         const overlay = document.createElement('div');
                         overlay.style.cssText = `
                             position: absolute; top: 2px; left: 2px; z-index: 9999;
-                            background: rgba(140, 48, 232, 0.9); color: #fff; font-weight: 600; font-size: 9px;
-                            padding: 1px 4px; border-radius: 3px; line-height: 1.2;
+                            background: rgba(220, 220, 220, 0.8); color: #000; font-weight: 600; font-size: 6px;
+                            padding: 1px 3px; border-radius: 2px; line-height: 1; pointer-events: none;
                         `;
                         overlay.textContent = `${item.index}`;
                         nodeEl.appendChild(overlay);
@@ -444,63 +446,57 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             // Step 4: Remove overlays
             indexOverlays.forEach(el => el.remove());
 
-            // DEBUG: Show screenshot preview for verification
-            const debugPreview = window.confirm(
-                'Screenshot captured with index labels. Click OK to continue, or Cancel to abort.\n\n' +
-                'The screenshot will open in a new tab for inspection.'
-            );
-            if (debugPreview) {
-                const win = window.open();
-                if (win) {
-                    win.document.write(`
-                        <html><head><title>VLM Screenshot Preview</title></head>
-                        <body style="margin:0; background:#1a1625;">
-                            <img src="${screenshot}" style="max-width:100%; height:auto;" />
-                            <p style="color:white; padding:20px;">
-                                Items count: ${stylingItems.length}<br/>
-                                Indices: ${stylingItems.map(i => i.index).join(', ')}
-                            </p>
-                        </body></html>
-                    `);
+            // Show screenshot preview modal for confirmation
+            setScreenshotPreview(screenshot);
+            setStylingStep('preview');
+        } catch (error) {
+            console.error('Screenshot capture failed:', error);
+            alert('Failed to capture screenshot');
+            setStylingStep('config');
+        }
+    }, [stylingItems, nodes, stylingOutfitCount, stylingPrompt]);
+
+    // Step 5: Confirm screenshot and call API
+    const handleConfirmScreenshot = useCallback(async () => {
+        if (!screenshotPreview) return;
+
+        const screenshot = screenshotPreview;
+        setScreenshotPreview(null);
+        setStylingStep('generating');
+
+        const callApi = async (retries = 2): Promise<any> => {
+            const response = await fetch('/api/canvas-styling', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    screenshot,
+                    itemCount: stylingItems.length,
+                    outfitCount: stylingOutfitCount,
+                    userPrompt: stylingPrompt || undefined,
+                }),
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                let errorMsg = 'API request failed';
+                try {
+                    const err = JSON.parse(text);
+                    errorMsg = err.error || errorMsg;
+                } catch {
+                    // Response wasn't JSON (cold start timeout)
+                    if (retries > 0) {
+                        console.log(`Retrying API call... (${retries} left)`);
+                        return callApi(retries - 1);
+                    }
+                    errorMsg = `Raw error: ${text.slice(0, 100)}`;
                 }
-            } else {
-                setStylingStep('config');
-                return;
+                throw new Error(errorMsg);
             }
 
-            // Step 5: Call API with retry for cold start
-            const callApi = async (retries = 2): Promise<any> => {
-                const response = await fetch('/api/canvas-styling', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        screenshot,
-                        itemCount: stylingItems.length,
-                        outfitCount: stylingOutfitCount,
-                        userPrompt: stylingPrompt || undefined,
-                    }),
-                });
+            return response.json();
+        };
 
-                if (!response.ok) {
-                    const text = await response.text();
-                    let errorMsg = 'API request failed';
-                    try {
-                        const err = JSON.parse(text);
-                        errorMsg = err.error || errorMsg;
-                    } catch {
-                        // Response wasn't JSON (cold start timeout)
-                        if (retries > 0) {
-                            console.log(`Retrying API call... (${retries} left)`);
-                            return callApi(retries - 1);
-                        }
-                        errorMsg = 'Server timeout, please try again';
-                    }
-                    throw new Error(errorMsg);
-                }
-
-                return response.json();
-            };
-
+        try {
             const result = await callApi();
 
             if (!result.outfits || result.outfits.length === 0) {
@@ -512,6 +508,46 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             console.log('Available stylingItems:', stylingItems.map(i => ({ index: i.index, nodeId: i.nodeId })));
 
             // Step 6: Fill whiteboards with animated fly effect
+            const whiteboardWidth = 420;
+            const whiteboardHeight = 300;
+            const whiteboardGapX = 25;
+            const whiteboardGapY = 25;
+            const startX = Math.max(...nodes.map(n => n.position.x + (n.measured?.width || 0)), 0) + 100;
+            const minY = Math.min(...nodes.map(n => n.position.y)) || 0;
+            const maxPerColumn = 4;
+
+            // Create whiteboards if needed (actually they should be created here)
+            const newNodes: Node[] = [];
+            const whiteboardIds: string[] = [];
+
+            for (let i = 0; i < stylingOutfitCount; i++) {
+                const wbId = `styling-wb-${Date.now()}-${i}`;
+                whiteboardIds.push(wbId);
+                const col = Math.floor(i / maxPerColumn);
+                const row = i % maxPerColumn;
+
+                newNodes.push({
+                    id: wbId,
+                    type: 'whiteboard',
+                    position: {
+                        x: startX + col * (whiteboardWidth + whiteboardGapX),
+                        y: minY + row * (whiteboardHeight + whiteboardGapY),
+                    },
+                    data: { label: `Look ${i + 1}` },
+                    style: { width: whiteboardWidth, height: whiteboardHeight },
+                    draggable: false, // temporarily lock
+                });
+            }
+
+            // Add whiteboards first
+            setNodes((nds) => [...nds, ...newNodes]);
+
+            // Wait a tick for nodes to be rendered
+            await new Promise(resolve => setTimeout(resolve, 100));
+            // Force fit view to see whiteboards
+            fitView({ padding: 0.2, duration: 800 });
+
+            // Image sizing
             const imageWidth = 80;
             const imageHeight = 80;
             const cols = 2; // 2 columns for 2-row layout
@@ -529,18 +565,13 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 outfitIdx: number;
             }
             const animTargets: AnimTarget[] = [];
-
-            // Store reasons for each outfit
             const outfitReasons: Map<string, string> = new Map();
 
             result.outfits.forEach((outfit: { selectedIndices: number[]; reason: string }, outfitIdx: number) => {
                 const wbId = whiteboardIds[outfitIdx];
                 if (!wbId) return;
 
-                // Store reason for this whiteboard
                 outfitReasons.set(wbId, outfit.reason || '');
-
-                // Debug: Log each outfit's indices
                 console.log(`Outfit ${outfitIdx + 1} indices:`, outfit.selectedIndices);
 
                 outfit.selectedIndices.forEach((idx, imgIdx) => {
@@ -569,34 +600,23 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             const flyDuration = 800;
             const container = reactFlowWrapper.current;
 
-            // Start typewriter effect for each whiteboard
+            // Start typewriter effect
             whiteboardIds.forEach((wbId, outfitIdx) => {
                 const wbEl = container?.querySelector(`[data-id="${wbId}"]`);
                 const reason = outfitReasons.get(wbId) || '';
 
                 if (wbEl && reason) {
-                    // Create typewriter container
                     const typeEl = document.createElement('div');
                     typeEl.style.cssText = `
-                        position: absolute;
-                        bottom: 8px;
-                        left: 10px;
-                        right: 10px;
-                        font-family: Georgia, serif;
-                        font-size: 11px;
-                        font-style: italic;
-                        color: rgba(0,0,0,0.5);
-                        line-height: 1.4;
-                        max-height: 60px;
-                        overflow: hidden;
+                        position: absolute; bottom: 8px; left: 10px; right: 10px;
+                        font-family: Georgia, serif; font-size: 11px; font-style: italic;
+                        color: rgba(0,0,0,0.5); line-height: 1.4; max-height: 60px; overflow: hidden;
                     `;
                     typeEl.className = 'typewriter-text';
                     wbEl.appendChild(typeEl);
 
-                    // Typewriter animation
                     const startDelay = outfitIdx * 400 + 300;
                     let charIdx = 0;
-
                     setTimeout(() => {
                         const typeInterval = setInterval(() => {
                             if (charIdx <= reason.length) {
@@ -606,7 +626,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                                 typeEl.textContent = reason;
                                 clearInterval(typeInterval);
                             }
-                        }, 30); // 30ms per character
+                        }, 30);
                     }, startDelay);
                 }
             });
@@ -619,26 +639,17 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                     const sourceRect = sourceEl.getBoundingClientRect();
                     const wbRect = wbEl.getBoundingClientRect();
 
-                    // Create flying element
                     const flyEl = document.createElement('div');
                     flyEl.style.cssText = `
-                        position: fixed;
-                        width: ${imageWidth}px;
-                        height: ${imageHeight}px;
+                        position: fixed; width: ${imageWidth}px; height: ${imageHeight}px;
                         background: url(${target.imageUrl}) center/contain no-repeat white;
-                        border-radius: 8px;
-                        box-shadow: 0 10px 40px rgba(140, 48, 232, 0.5);
-                        z-index: 9999;
-                        pointer-events: none;
-                        left: ${sourceRect.left}px;
-                        top: ${sourceRect.top}px;
-                        opacity: 0;
-                        transform: scale(0.5);
+                        border-radius: 8px; box-shadow: 0 10px 40px rgba(140, 48, 232, 0.5);
+                        z-index: 9999; pointer-events: none; left: ${sourceRect.left}px; top: ${sourceRect.top}px;
+                        opacity: 0; transform: scale(0.5);
                         transition: all ${flyDuration}ms cubic-bezier(0.34, 1.56, 0.64, 1);
                     `;
                     document.body.appendChild(flyEl);
 
-                    // Start animation after delay
                     setTimeout(() => {
                         flyEl.style.opacity = '1';
                         flyEl.style.transform = 'scale(1)';
@@ -646,9 +657,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                         flyEl.style.top = `${wbRect.top + target.targetY}px`;
                     }, target.delay);
 
-                    // Add node and remove fly element when animation completes
                     setTimeout(() => {
-                        // Add actual node immediately
                         const newNode: Node = {
                             id: `styling-img-${Date.now()}-${i}`,
                             type: 'resizableImage',
@@ -659,33 +668,27 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                             style: { width: imageWidth, height: imageHeight },
                         };
                         setNodes((nds) => [...nds, newNode]);
-
-                        // Remove flying element
                         flyEl.remove();
                     }, target.delay + flyDuration);
                 }
             });
 
-            // Reset styling state after all animations complete
             const maxDelay = Math.max(...animTargets.map(t => t.delay)) + flyDuration + 200;
-
             setTimeout(() => {
-                // Fit view after all nodes added
                 fitView({ padding: 0.15, duration: 400 });
-
-                // Reset styling state
                 setStylingStep('idle');
                 setStylingItems([]);
                 setStylingPrompt('');
-                setSelectedNodes([]);
             }, maxDelay);
 
         } catch (error) {
-            console.error('Styling generation failed:', error);
-            alert(`Failed to generate outfits: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            console.error('Styling generation error:', error);
+            alert(`Generating outfits failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
             setStylingStep('config');
         }
-    }, [stylingItems, stylingOutfitCount, stylingPrompt, setNodes, nodes, fitView]);
+    }, [screenshotPreview, stylingItems, stylingOutfitCount, stylingPrompt, nodes, fitView, setNodes]);
+
+
 
     // Export canvas
     const handleExport = useCallback(async () => {
@@ -941,7 +944,104 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 )}
             </div>
 
-            {/* Styling Config Modal */}
+            {/* Screenshot Preview Modal */}
+            {stylingStep === 'preview' && screenshotPreview && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="bg-[#1a1625] rounded-xl border border-white/10 shadow-2xl max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
+                        <div className="p-4 border-b border-white/5 flex justify-between items-center bg-[#252033]">
+                            <h3 className="tex-lg font-medium text-white/90">Confirm Items & Indices</h3>
+                            <button
+                                onClick={() => { setStylingStep('config'); setScreenshotPreview(null); }}
+                                className="text-white/50 hover:text-white transition"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-auto p-6 bg-black/20 flex flex-col items-center">
+                            <p className="text-white/60 mb-4 text-sm max-w-lg text-center">
+                                Please verify that each item has a clearly visible index number.
+                                The AI will use these numbers to create your outfits.
+                            </p>
+                            <div className="relative border border-dashed border-white/20 rounded-lg overflow-hidden">
+                                <img src={screenshotPreview} alt="Screenshot Preview" className="max-w-full h-auto" />
+                            </div>
+                            <div className="mt-4 flex gap-4 text-xs text-white/40">
+                                <span>Items detected: {stylingItems.length}</span>
+                                <span>Indices: 1 - {stylingItems.length}</span>
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t border-white/5 flex justify-end gap-3 bg-[#252033]">
+                            <button
+                                onClick={() => { setStylingStep('config'); setScreenshotPreview(null); }}
+                                className="px-4 py-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition font-medium text-sm"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleConfirmScreenshot}
+                                className="px-6 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-medium shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40 hover:scale-105 active:scale-95 transition-all text-sm"
+                            >
+                                Generate Outfits
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Config Modal */}
+            {/* Screenshot Preview Modal */}
+            {stylingStep === 'preview' && screenshotPreview && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="bg-[#1a1625] rounded-xl border border-white/10 shadow-2xl max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
+                        <div className="p-4 border-b border-white/5 flex justify-between items-center bg-[#252033]">
+                            <h3 className="tex-lg font-medium text-white/90">Confirm Items & Indices</h3>
+                            <button
+                                onClick={() => { setStylingStep('config'); setScreenshotPreview(null); }}
+                                className="text-white/50 hover:text-white transition"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-auto p-6 bg-black/20 flex flex-col items-center">
+                            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mb-4 max-w-lg text-center">
+                                <p className="text-yellow-200/80 text-xs">
+                                    Please verify that each item has a <b>clearly visible index number</b>.
+                                    If numbers are obscured, try reorganizing the canvas.
+                                </p>
+                            </div>
+
+                            <div className="relative border border-dashed border-white/20 rounded-lg overflow-hidden shadow-2xl">
+                                <img src={screenshotPreview} alt="Screenshot Preview" className="max-w-full h-auto object-contain max-h-[60vh]" />
+                            </div>
+
+                            <div className="mt-4 flex gap-4 text-xs text-white/40 font-mono">
+                                <span>Detected Items: {stylingItems.length}</span>
+                                <span>Indices: 1 - {stylingItems.length}</span>
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t border-white/5 flex justify-end gap-3 bg-[#252033]">
+                            <button
+                                onClick={() => { setStylingStep('config'); setScreenshotPreview(null); }}
+                                className="px-4 py-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition font-medium text-sm"
+                            >
+                                Back to Config
+                            </button>
+                            <button
+                                onClick={handleConfirmScreenshot}
+                                className="px-6 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-medium shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40 hover:scale-105 active:scale-95 transition-all text-sm flex items-center gap-2"
+                            >
+                                <span>Generate Outfits</span>
+                                <span className="text-xs bg-white/20 px-1.5 py-0.5 rounded">⏎</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {stylingStep === 'config' && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                     <div className="bg-card-dark border border-border-dark rounded-2xl w-full max-w-[90vw] xl:max-w-[1600px] p-6 shadow-2xl max-h-[90vh] flex flex-col">
