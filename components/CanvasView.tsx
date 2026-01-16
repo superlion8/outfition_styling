@@ -173,7 +173,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
-    const [activeTool, setActiveTool] = useState<'select' | 'pan'>('select');
+    const [activeTool, setActiveTool] = useState<'select' | 'pan'>('pan');
     const [assetTab, setAssetTab] = useState<'wardrobe' | 'uploads' | 'templates'>('wardrobe');
 
     // Model selector modal state
@@ -757,7 +757,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             {/* Styling Config Modal */}
             {stylingStep === 'config' && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-card-dark border border-border-dark rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+                    <div className="bg-card-dark border border-border-dark rounded-2xl w-full max-w-2xl p-6 shadow-2xl max-h-[90vh] flex flex-col">
                         <div className="flex justify-between items-center mb-6">
                             <div className="flex items-center gap-3">
                                 <Sparkles className="w-5 h-5 text-primary" />
@@ -773,12 +773,12 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
                         <div className="space-y-4">
                             <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                                <span className="text-sm text-text-muted">Selected Items</span>
-                                <div className="flex flex-wrap gap-2 mt-2">
+                                <span className="text-sm text-text-muted">Selected Items ({stylingItems.length})</span>
+                                <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 gap-2 mt-2 max-h-48 overflow-y-auto">
                                     {stylingItems.map(item => (
-                                        <div key={item.nodeId} className="relative w-12 h-14 rounded-lg overflow-hidden border border-white/20">
+                                        <div key={item.nodeId} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-white/20">
                                             <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
-                                            <div className="absolute top-0 left-0 bg-primary text-black text-[10px] font-bold px-1.5 py-0.5 rounded-br-lg">
+                                            <div className="absolute top-0 left-0 bg-primary text-black text-[8px] font-bold px-1 py-0.5 rounded-br-lg">
                                                 {item.index}
                                             </div>
                                         </div>
