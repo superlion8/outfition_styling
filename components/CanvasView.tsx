@@ -927,124 +927,92 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 </div>
             )}
 
-            {/* Styling Indicator - futuristic AI style */}
+            {/* Styling Indicator - elegant fashion style */}
             {stylingStep === 'generating' && (
                 <div
                     className="absolute z-20 pointer-events-none"
                     style={{
                         left: '50%',
                         top: '55%',
-                        transform: 'translate(-50%, -50%) rotate(-12deg)',
+                        transform: 'translate(-50%, -50%)',
                     }}
                 >
-                    <div className="relative">
-                        {/* Main text with glitch effect */}
+                    <div className="flex flex-col items-center">
+                        {/* Elegant line above */}
+                        <div
+                            className="w-16 h-px mb-6"
+                            style={{
+                                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)',
+                                animation: 'fade-in 1s ease-out',
+                            }}
+                        />
+
+                        {/* Main text - elegant serif */}
                         <div className="relative">
                             <span
-                                className="text-7xl font-black tracking-tight"
                                 style={{
-                                    fontFamily: 'system-ui, -apple-system, sans-serif',
-                                    background: 'linear-gradient(90deg, #00f0ff 0%, #8c30e8 35%, #ff0080 65%, #00f0ff 100%)',
-                                    backgroundSize: '300% auto',
-                                    WebkitBackgroundClip: 'text',
-                                    WebkitTextFillColor: 'transparent',
-                                    animation: 'gradient-x 3s linear infinite',
-                                    textShadow: '0 0 80px rgba(140, 48, 232, 0.8)',
-                                    letterSpacing: '-0.02em',
+                                    fontFamily: 'Georgia, "Times New Roman", serif',
+                                    fontSize: '4rem',
+                                    fontWeight: 300,
+                                    fontStyle: 'italic',
+                                    letterSpacing: '0.15em',
+                                    color: 'rgba(255, 255, 255, 0.9)',
+                                    animation: 'elegant-fade 2s ease-in-out infinite',
                                 }}
                             >
-                                STYLING
-                            </span>
-                            {/* Glitch layers */}
-                            <span
-                                className="absolute inset-0 text-7xl font-black tracking-tight opacity-50"
-                                style={{
-                                    fontFamily: 'system-ui, -apple-system, sans-serif',
-                                    color: '#00f0ff',
-                                    animation: 'glitch-1 0.3s infinite',
-                                    clipPath: 'inset(40% 0 20% 0)',
-                                    letterSpacing: '-0.02em',
-                                }}
-                            >
-                                STYLING
-                            </span>
-                            <span
-                                className="absolute inset-0 text-7xl font-black tracking-tight opacity-50"
-                                style={{
-                                    fontFamily: 'system-ui, -apple-system, sans-serif',
-                                    color: '#ff0080',
-                                    animation: 'glitch-2 0.3s infinite',
-                                    clipPath: 'inset(60% 0 0% 0)',
-                                    letterSpacing: '-0.02em',
-                                }}
-                            >
-                                STYLING
+                                Styling
                             </span>
                         </div>
 
-                        {/* Scanning line */}
-                        <div
-                            className="absolute inset-0 overflow-hidden"
-                            style={{ animation: 'scan 2s linear infinite' }}
-                        >
-                            <div
-                                className="w-full h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent"
-                                style={{ boxShadow: '0 0 20px 5px rgba(0, 240, 255, 0.5)' }}
-                            />
-                        </div>
-
-                        {/* Dots */}
-                        <div className="flex gap-3 mt-4 justify-center">
+                        {/* Minimal dots */}
+                        <div className="flex gap-4 mt-5">
                             {[0, 1, 2].map(i => (
                                 <div
                                     key={i}
-                                    className="w-3 h-3 rounded-full"
+                                    className="w-1.5 h-1.5 rounded-full bg-white/40"
                                     style={{
-                                        background: 'linear-gradient(135deg, #8c30e8, #ff0080)',
-                                        animation: `dot-pulse 1.4s ease-in-out ${i * 0.2}s infinite`,
-                                        boxShadow: '0 0 20px rgba(140, 48, 232, 0.8)',
+                                        animation: `elegant-dot 1.5s ease-in-out ${i * 0.3}s infinite`,
                                     }}
                                 />
                             ))}
                         </div>
 
+                        {/* Elegant line below */}
+                        <div
+                            className="w-16 h-px mt-6"
+                            style={{
+                                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)',
+                                animation: 'fade-in 1s ease-out 0.3s backwards',
+                            }}
+                        />
+
                         {/* Subtitle */}
                         <p
-                            className="text-center mt-4 text-sm font-medium tracking-widest uppercase"
+                            className="mt-6 tracking-[0.3em] uppercase"
                             style={{
-                                color: 'rgba(255,255,255,0.6)',
-                                animation: 'pulse 2s ease-in-out infinite',
+                                fontFamily: 'system-ui, sans-serif',
+                                fontSize: '0.65rem',
+                                fontWeight: 500,
+                                color: 'rgba(255,255,255,0.4)',
+                                animation: 'fade-in 1.5s ease-out',
                             }}
                         >
-                            ◆ AI Processing ◆
+                            Curating your look
                         </p>
                     </div>
 
                     <style>{`
-                        @keyframes gradient-x {
-                            0% { background-position: 0% center; }
-                            100% { background-position: 300% center; }
+                        @keyframes elegant-fade {
+                            0%, 100% { opacity: 0.9; }
+                            50% { opacity: 0.6; }
                         }
-                        @keyframes glitch-1 {
-                            0%, 100% { transform: translateX(0); }
-                            20% { transform: translateX(-3px); }
-                            40% { transform: translateX(3px); }
-                            60% { transform: translateX(-2px); }
-                            80% { transform: translateX(2px); }
+                        @keyframes elegant-dot {
+                            0%, 100% { opacity: 0.3; transform: scale(1); }
+                            50% { opacity: 0.8; transform: scale(1.3); }
                         }
-                        @keyframes glitch-2 {
-                            0%, 100% { transform: translateX(0); }
-                            25% { transform: translateX(2px); }
-                            50% { transform: translateX(-3px); }
-                            75% { transform: translateX(3px); }
-                        }
-                        @keyframes scan {
-                            0% { transform: translateY(-100%); }
-                            100% { transform: translateY(400%); }
-                        }
-                        @keyframes dot-pulse {
-                            0%, 100% { transform: scale(1); opacity: 0.5; }
-                            50% { transform: scale(1.5); opacity: 1; }
+                        @keyframes fade-in {
+                            from { opacity: 0; transform: scaleX(0); }
+                            to { opacity: 1; transform: scaleX(1); }
                         }
                     `}</style>
                 </div>
