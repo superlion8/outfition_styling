@@ -768,7 +768,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             {/* Styling Config Modal */}
             {stylingStep === 'config' && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-card-dark border border-border-dark rounded-2xl w-full max-w-2xl p-6 shadow-2xl max-h-[90vh] flex flex-col">
+                    <div className="bg-card-dark border border-border-dark rounded-2xl w-full max-w-[90vw] xl:max-w-[1600px] p-6 shadow-2xl max-h-[90vh] flex flex-col">
                         <div className="flex justify-between items-center mb-6">
                             <div className="flex items-center gap-3">
                                 <Sparkles className="w-5 h-5 text-primary" />
@@ -785,7 +785,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                         <div className="space-y-4">
                             <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                                 <span className="text-sm text-text-muted">Selected Items ({stylingItems.length})</span>
-                                <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 gap-2 mt-2 max-h-48 overflow-y-auto">
+                                <div className="grid grid-cols-10 sm:grid-cols-12 md:grid-cols-14 lg:grid-cols-16 xl:grid-cols-20 gap-2 mt-2 max-h-[50vh] overflow-y-auto">
                                     {stylingItems.map(item => (
                                         <div key={item.nodeId} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-white/20">
                                             <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
