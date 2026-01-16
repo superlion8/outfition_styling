@@ -483,13 +483,23 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 throw new Error('No outfits generated');
             }
 
-            // Step 6: Fill whiteboards with items (single row, horizontal layout)
-            const imageNodes: Node[] = [];
+            // Step 6: Fill whiteboards with animated fly effect
             const imageWidth = 80;
             const imageHeight = 80;
-            const cols = 6; // All in one row
+            const cols = 6;
             const gap = 8;
-            const offsetY = 20; // Below label
+            const offsetY = 20;
+
+            // Collect animation targets
+            interface AnimTarget {
+                sourceNodeId: string;
+                targetWbId: string;
+                imageUrl: string;
+                targetX: number;
+                targetY: number;
+                delay: number;
+            }
+            const animTargets: AnimTarget[] = [];
 
             result.outfits.forEach((outfit: { selectedIndices: number[]; reason: string }, outfitIdx: number) => {
                 const wbId = whiteboardIds[outfitIdx];
@@ -502,40 +512,100 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                     const imgCol = imgIdx % cols;
                     const imgRow = Math.floor(imgIdx / cols);
 
-                    imageNodes.push({
-                        id: `styling-img-${Date.now()}-${outfitIdx}-${imgIdx}`,
-                        type: 'resizableImage',
-                        position: {
-                            x: 8 + imgCol * (imageWidth + gap),
-                            y: offsetY + imgRow * (imageHeight + gap),
-                        },
-                        data: { imageUrl: item.imageUrl },
-                        parentId: wbId,
-                        extent: 'parent',
-                        style: { width: imageWidth, height: imageHeight },
+                    animTargets.push({
+                        sourceNodeId: item.nodeId,
+                        targetWbId: wbId,
+                        imageUrl: item.imageUrl,
+                        targetX: 8 + imgCol * (imageWidth + gap),
+                        targetY: offsetY + imgRow * (imageHeight + gap),
+                        delay: outfitIdx * 200 + imgIdx * 100, // Stagger animations
                     });
                 });
             });
 
-            setNodes((nds) => [...nds, ...imageNodes]);
+            // Create flying elements and animate
+            const flyDuration = 600;
+            const container = reactFlowWrapper.current;
 
-            // Fit view to show all content
+            animTargets.forEach((target) => {
+                const sourceEl = container?.querySelector(`[data-id="${target.sourceNodeId}"]`);
+                const wbEl = container?.querySelector(`[data-id="${target.targetWbId}"]`);
+
+                if (sourceEl && wbEl) {
+                    const sourceRect = sourceEl.getBoundingClientRect();
+                    const wbRect = wbEl.getBoundingClientRect();
+                    const containerRect = container!.getBoundingClientRect();
+
+                    // Create flying element
+                    const flyEl = document.createElement('div');
+                    flyEl.style.cssText = `
+                        position: fixed;
+                        width: ${imageWidth}px;
+                        height: ${imageHeight}px;
+                        background: url(${target.imageUrl}) center/contain no-repeat white;
+                        border-radius: 8px;
+                        box-shadow: 0 10px 40px rgba(140, 48, 232, 0.5);
+                        z-index: 9999;
+                        pointer-events: none;
+                        left: ${sourceRect.left}px;
+                        top: ${sourceRect.top}px;
+                        opacity: 0;
+                        transform: scale(0.5);
+                        transition: all ${flyDuration}ms cubic-bezier(0.34, 1.56, 0.64, 1);
+                    `;
+                    document.body.appendChild(flyEl);
+
+                    // Start animation after delay
+                    setTimeout(() => {
+                        flyEl.style.opacity = '1';
+                        flyEl.style.transform = 'scale(1)';
+                        flyEl.style.left = `${wbRect.left + target.targetX}px`;
+                        flyEl.style.top = `${wbRect.top + target.targetY}px`;
+                    }, target.delay);
+
+                    // Remove after animation
+                    setTimeout(() => {
+                        flyEl.remove();
+                    }, target.delay + flyDuration + 100);
+                }
+            });
+
+            // Add actual nodes after all animations complete
+            const maxDelay = Math.max(...animTargets.map(t => t.delay)) + flyDuration + 50;
+
             setTimeout(() => {
-                fitView({ padding: 0.15, duration: 400 });
-            }, 100);
+                const imageNodes: Node[] = animTargets.map((target, i) => ({
+                    id: `styling-img-${Date.now()}-${i}`,
+                    type: 'resizableImage',
+                    position: { x: target.targetX, y: target.targetY },
+                    data: { imageUrl: target.imageUrl },
+                    parentId: target.targetWbId,
+                    extent: 'parent' as const,
+                    style: { width: imageWidth, height: imageHeight },
+                }));
 
-            // Reset styling state
-            setStylingStep('idle');
-            setStylingItems([]);
-            setStylingPrompt('');
-            setSelectedNodes([]);
+                setNodes((nds) => [...nds, ...imageNodes]);
+
+                // Fit view after nodes added
+                setTimeout(() => {
+                    fitView({ padding: 0.15, duration: 400 });
+                }, 100);
+            }, maxDelay);
+
+            // Reset styling state after animations
+            setTimeout(() => {
+                setStylingStep('idle');
+                setStylingItems([]);
+                setStylingPrompt('');
+                setSelectedNodes([]);
+            }, maxDelay + 200);
 
         } catch (error) {
             console.error('Styling generation failed:', error);
             alert(`Failed to generate outfits: ${error instanceof Error ? error.message : 'Unknown error'}`);
             setStylingStep('config');
         }
-    }, [stylingItems, stylingOutfitCount, stylingPrompt, setNodes]);
+    }, [stylingItems, stylingOutfitCount, stylingPrompt, setNodes, nodes, fitView]);
 
     // Export canvas
     const handleExport = useCallback(async () => {
