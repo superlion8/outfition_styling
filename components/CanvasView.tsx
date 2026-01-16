@@ -422,11 +422,11 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                     if (nodeEl) {
                         const overlay = document.createElement('div');
                         overlay.style.cssText = `
-                            position: absolute; top: 0; left: 0; z-index: 9999;
-                            background: #8c30e8; color: #000; font-weight: bold; font-size: 12px;
-                            padding: 2px 6px; border-radius: 0 0 6px 0;
+                            position: absolute; top: 2px; left: 2px; z-index: 9999;
+                            background: rgba(140, 48, 232, 0.9); color: #fff; font-weight: 600; font-size: 9px;
+                            padding: 1px 4px; border-radius: 3px; line-height: 1.2;
                         `;
-                        overlay.textContent = `#${item.index}`;
+                        overlay.textContent = `${item.index}`;
                         nodeEl.appendChild(overlay);
                         indexOverlays.push(overlay);
                     }
