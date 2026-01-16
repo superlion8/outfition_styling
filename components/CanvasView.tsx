@@ -375,12 +375,12 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
         // Whiteboard sizing (wider, shorter)
         const whiteboardWidth = 270;
-        const whiteboardHeight = 110;
+        const whiteboardHeight = 55;
         const whiteboardGapX = 30;
-        const whiteboardGapY = 25;
+        const whiteboardGapY = 40;
         const startX = maxX + 80;
         const startY = minY;
-        const maxPerColumn = 5;
+        const maxPerColumn = 6;
 
         // Step 1: Create empty whiteboards immediately
         const whiteboardIds: string[] = [];
@@ -483,13 +483,13 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 throw new Error('No outfits generated');
             }
 
-            // Step 6: Fill whiteboards with items (horizontal layout)
+            // Step 6: Fill whiteboards with items (single row, horizontal layout)
             const imageNodes: Node[] = [];
-            const imageWidth = 55;
-            const imageHeight = 70;
-            const cols = 4; // 4 images per row for horizontal layout
-            const gap = 5;
-            const offsetY = 22;
+            const imageWidth = 40;
+            const imageHeight = 40;
+            const cols = 6; // All in one row
+            const gap = 4;
+            const offsetY = 10;
 
             result.outfits.forEach((outfit: { selectedIndices: number[]; reason: string }, outfitIdx: number) => {
                 const wbId = whiteboardIds[outfitIdx];
