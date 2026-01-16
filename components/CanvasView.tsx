@@ -498,12 +498,19 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 targetX: number;
                 targetY: number;
                 delay: number;
+                outfitIdx: number;
             }
             const animTargets: AnimTarget[] = [];
+
+            // Store reasons for each outfit
+            const outfitReasons: Map<string, string> = new Map();
 
             result.outfits.forEach((outfit: { selectedIndices: number[]; reason: string }, outfitIdx: number) => {
                 const wbId = whiteboardIds[outfitIdx];
                 if (!wbId) return;
+
+                // Store reason for this whiteboard
+                outfitReasons.set(wbId, outfit.reason || '');
 
                 outfit.selectedIndices.forEach((idx, imgIdx) => {
                     const item = stylingItems.find(i => i.index === idx);
@@ -518,14 +525,57 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                         imageUrl: item.imageUrl,
                         targetX: 8 + imgCol * (imageWidth + gap),
                         targetY: offsetY + imgRow * (imageHeight + gap),
-                        delay: outfitIdx * 400 + imgIdx * 200, // Slower stagger (doubled)
+                        delay: outfitIdx * 400 + imgIdx * 200,
+                        outfitIdx,
                     });
                 });
             });
 
             // Create flying elements and animate
-            const flyDuration = 800; // Slower flight (was 600)
+            const flyDuration = 800;
             const container = reactFlowWrapper.current;
+
+            // Start typewriter effect for each whiteboard
+            whiteboardIds.forEach((wbId, outfitIdx) => {
+                const wbEl = container?.querySelector(`[data-id="${wbId}"]`);
+                const reason = outfitReasons.get(wbId) || '';
+
+                if (wbEl && reason) {
+                    // Create typewriter container
+                    const typeEl = document.createElement('div');
+                    typeEl.style.cssText = `
+                        position: absolute;
+                        bottom: 8px;
+                        left: 10px;
+                        right: 10px;
+                        font-family: Georgia, serif;
+                        font-size: 11px;
+                        font-style: italic;
+                        color: rgba(0,0,0,0.5);
+                        line-height: 1.4;
+                        max-height: 60px;
+                        overflow: hidden;
+                    `;
+                    typeEl.className = 'typewriter-text';
+                    wbEl.appendChild(typeEl);
+
+                    // Typewriter animation
+                    const startDelay = outfitIdx * 400 + 300;
+                    let charIdx = 0;
+
+                    setTimeout(() => {
+                        const typeInterval = setInterval(() => {
+                            if (charIdx <= reason.length) {
+                                typeEl.textContent = reason.slice(0, charIdx) + (charIdx < reason.length ? '|' : '');
+                                charIdx++;
+                            } else {
+                                typeEl.textContent = reason;
+                                clearInterval(typeInterval);
+                            }
+                        }, 30); // 30ms per character
+                    }, startDelay);
+                }
+            });
 
             animTargets.forEach((target, i) => {
                 const sourceEl = container?.querySelector(`[data-id="${target.sourceNodeId}"]`);
