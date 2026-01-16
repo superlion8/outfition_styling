@@ -10,6 +10,7 @@ import {
     Panel,
     useReactFlow,
     Node,
+    Edge,
     NodeProps,
     NodeResizer,
 } from '@xyflow/react';
@@ -56,7 +57,12 @@ interface WhiteboardData {
     [key: string]: unknown;
 }
 
-const WhiteboardNode: React.FC<NodeProps<Node<WhiteboardData>>> = ({ data, selected }) => {
+const WhiteboardNode: React.FC<NodeProps<Node<WhiteboardData>>> = ({ id, data, selected }) => {
+    const handleShootClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        window.dispatchEvent(new CustomEvent('startShoot', { detail: { whiteboardId: id } }));
+    };
+
     return (
         <div
             className={`
@@ -68,6 +74,14 @@ const WhiteboardNode: React.FC<NodeProps<Node<WhiteboardData>>> = ({ data, selec
             <div className="absolute top-2 left-3 text-gray-400 text-xs font-medium">
                 {data.label || 'Whiteboard'}
             </div>
+            {/* Shoot Button */}
+            <button
+                onClick={handleShootClick}
+                className="absolute top-2 right-2 px-2 py-1 bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white text-[10px] font-bold rounded-md shadow-lg transition-all hover:scale-105 flex items-center gap-1"
+            >
+                <span>📸</span>
+                <span>Shoot</span>
+            </button>
         </div>
     );
 };
@@ -144,11 +158,96 @@ const ModelSelectorNode: React.FC<NodeProps<Node<ModelSelectorData>>> = ({ id, d
     );
 };
 
+// Model Card Node (for shooting workflow)
+interface ModelCardData {
+    whiteboardId: string;
+    selectedModelId?: string;
+    [key: string]: unknown;
+}
+
+const ModelCardNode: React.FC<NodeProps<Node<ModelCardData>>> = ({ id, data }) => {
+    const handleSelectModel = (modelId: string, modelImage: string) => {
+        window.dispatchEvent(new CustomEvent('selectShootModel', {
+            detail: { nodeId: id, whiteboardId: data.whiteboardId, modelId, modelImage }
+        }));
+    };
+
+    const handleConfirmShoot = () => {
+        window.dispatchEvent(new CustomEvent('confirmShoot', {
+            detail: { whiteboardId: data.whiteboardId }
+        }));
+    };
+
+    const models = modelsDataRaw as Model[];
+    const displayModels = models.slice(0, 12); // Show first 12 models
+
+    return (
+        <div className="bg-card-dark border border-white/20 rounded-xl shadow-2xl p-3 w-[280px]">
+            <div className="flex justify-between items-center mb-2">
+                <span className="text-white text-xs font-bold">Select Model</span>
+                {data.selectedModelId && (
+                    <button
+                        onClick={handleConfirmShoot}
+                        className="px-2 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-[10px] font-bold rounded-md"
+                    >
+                        Confirm Shoot ✓
+                    </button>
+                )}
+            </div>
+            <div className="grid grid-cols-4 gap-1 max-h-[200px] overflow-y-auto">
+                {displayModels.map((m) => (
+                    <div
+                        key={m.model_id}
+                        onClick={() => handleSelectModel(m.model_id, m.image)}
+                        className={`aspect-[3/4] rounded-lg overflow-hidden cursor-pointer border-2 transition-all hover:scale-105 ${data.selectedModelId === m.model_id
+                            ? 'border-green-400 ring-2 ring-green-400/50'
+                            : 'border-transparent hover:border-white/30'
+                            }`}
+                    >
+                        <img src={m.image} alt="" className="w-full h-full object-cover" />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+// Generation Card Node (shows loading/result)
+interface GenerationCardData {
+    status: 'loading' | 'success' | 'error';
+    imageUrl?: string;
+    errorMessage?: string;
+    [key: string]: unknown;
+}
+
+const GenerationCardNode: React.FC<NodeProps<Node<GenerationCardData>>> = ({ data }) => {
+    return (
+        <div className="bg-card-dark border border-white/20 rounded-xl shadow-2xl overflow-hidden w-[200px]">
+            {data.status === 'loading' && (
+                <div className="aspect-[3/4] flex flex-col items-center justify-center bg-black/20">
+                    <div className="w-8 h-8 border-2 border-white/20 border-t-pink-500 rounded-full animate-spin" />
+                    <span className="text-white/60 text-xs mt-3 font-medium">Generating...</span>
+                </div>
+            )}
+            {data.status === 'success' && data.imageUrl && (
+                <img src={data.imageUrl} alt="Generated Look" className="w-full aspect-[3/4] object-cover" />
+            )}
+            {data.status === 'error' && (
+                <div className="aspect-[3/4] flex flex-col items-center justify-center bg-red-900/20 p-4">
+                    <span className="text-red-400 text-xs text-center">{data.errorMessage || 'Generation failed'}</span>
+                </div>
+            )}
+        </div>
+    );
+};
+
 const nodeTypes = {
     canvasItem: CanvasItemNode,
     whiteboard: WhiteboardNode,
     resizableImage: ResizableImageNode,
     modelSelector: ModelSelectorNode,
+    modelCard: ModelCardNode,
+    generationCard: GenerationCardNode,
 };
 
 interface CanvasViewProps {
@@ -198,6 +297,13 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
     const [stylingOutfitCount, setStylingOutfitCount] = useState(3);
     const [stylingPrompt, setStylingPrompt] = useState('');
 
+    // Shoot workflow state
+    type ShootStep = 'idle' | 'selectModel' | 'inputPrompt' | 'generating';
+    const [shootStep, setShootStep] = useState<ShootStep>('idle');
+    const [shootingWhiteboardId, setShootingWhiteboardId] = useState<string | null>(null);
+    const [selectedShootModel, setSelectedShootModel] = useState<{ id: string; image: string } | null>(null);
+    const [shootPrompt, setShootPrompt] = useState('');
+
 
     // Listen for model selector open event from nodes
     useEffect(() => {
@@ -208,6 +314,170 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         window.addEventListener('openModelSelector', handleOpenModelSelector as EventListener);
         return () => window.removeEventListener('openModelSelector', handleOpenModelSelector as EventListener);
     }, []);
+
+    // ===== Shoot Workflow Event Listeners =====
+
+    // Handle "Shoot" button click on whiteboard
+    useEffect(() => {
+        const handleStartShoot = (e: CustomEvent<{ whiteboardId: string }>) => {
+            const { whiteboardId } = e.detail;
+
+            // Find the whiteboard node
+            const wb = nodes.find(n => n.id === whiteboardId);
+            if (!wb) return;
+
+            // Create ModelCard node to the right of whiteboard
+            const modelCardId = `modelcard-${whiteboardId}`;
+            const modelCardNode: Node = {
+                id: modelCardId,
+                type: 'modelCard',
+                position: {
+                    x: wb.position.x + (typeof wb.style?.width === 'number' ? wb.style.width : 420) + 80,
+                    y: wb.position.y,
+                },
+                data: { whiteboardId },
+            };
+
+            // Create dashed edge
+            const edge: Edge = {
+                id: `shoot-edge-${whiteboardId}`,
+                source: whiteboardId,
+                target: modelCardId,
+                style: { strokeDasharray: '8,4', stroke: '#f472b6', strokeWidth: 2 },
+                animated: true,
+            };
+
+            setNodes((nds) => [...nds, modelCardNode]);
+            setEdges((eds) => [...eds, edge]);
+            setShootingWhiteboardId(whiteboardId);
+            setShootStep('selectModel');
+        };
+
+        window.addEventListener('startShoot', handleStartShoot as EventListener);
+        return () => window.removeEventListener('startShoot', handleStartShoot as EventListener);
+    }, [nodes, setNodes, setEdges]);
+
+    // Handle model selection in ModelCard
+    useEffect(() => {
+        const handleSelectShootModel = (e: CustomEvent<{ nodeId: string; whiteboardId: string; modelId: string; modelImage: string }>) => {
+            const { nodeId, modelId, modelImage } = e.detail;
+
+            // Update the ModelCard node with selected model
+            setNodes((nds) => nds.map(n =>
+                n.id === nodeId
+                    ? { ...n, data: { ...n.data, selectedModelId: modelId } }
+                    : n
+            ));
+
+            setSelectedShootModel({ id: modelId, image: modelImage });
+        };
+
+        window.addEventListener('selectShootModel', handleSelectShootModel as EventListener);
+        return () => window.removeEventListener('selectShootModel', handleSelectShootModel as EventListener);
+    }, [setNodes]);
+
+    // Handle confirm shoot - show prompt input modal
+    useEffect(() => {
+        const handleConfirmShoot = (e: CustomEvent<{ whiteboardId: string }>) => {
+            setShootStep('inputPrompt');
+        };
+
+        window.addEventListener('confirmShoot', handleConfirmShoot as EventListener);
+        return () => window.removeEventListener('confirmShoot', handleConfirmShoot as EventListener);
+    }, []);
+
+    // Execute the actual generation
+    const executeShoot = useCallback(async () => {
+        if (!shootingWhiteboardId || !selectedShootModel || !reactFlowWrapper.current) return;
+
+        setShootStep('generating');
+
+        const wb = nodes.find(n => n.id === shootingWhiteboardId);
+        const modelCardId = `modelcard-${shootingWhiteboardId}`;
+        const modelCard = nodes.find(n => n.id === modelCardId);
+
+        if (!wb || !modelCard) return;
+
+        // Create GenerationCard node
+        const genCardId = `gencard-${shootingWhiteboardId}`;
+        const genCardNode: Node = {
+            id: genCardId,
+            type: 'generationCard',
+            position: {
+                x: modelCard.position.x + 300,
+                y: modelCard.position.y,
+            },
+            data: { status: 'loading' },
+        };
+
+        // Edge from ModelCard to GenerationCard
+        const edge: Edge = {
+            id: `gen-edge-${shootingWhiteboardId}`,
+            source: modelCardId,
+            target: genCardId,
+            style: { strokeDasharray: '8,4', stroke: '#22c55e', strokeWidth: 2 },
+            animated: true,
+        };
+
+        setNodes((nds) => [...nds, genCardNode]);
+        setEdges((eds) => [...eds, edge]);
+
+        try {
+            // Capture screenshot of the whiteboard
+            const wbElement = reactFlowWrapper.current.querySelector(`[data-id="${shootingWhiteboardId}"]`);
+            if (!wbElement) throw new Error('Whiteboard element not found');
+
+            const html2canvas = (await import('html2canvas')).default;
+            const canvas = await html2canvas(wbElement as HTMLElement, {
+                backgroundColor: '#ffffff',
+                scale: 2,
+            });
+            const outfitScreenshot = canvas.toDataURL('image/jpeg', 0.8);
+
+            // Call API
+            const response = await fetch('/api/shoot-whiteboard', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    outfitScreenshot,
+                    modelImage: selectedShootModel.image,
+                    userPrompt: shootPrompt || undefined,
+                }),
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Generation failed');
+            }
+
+            const result = await response.json();
+
+            // Update GenerationCard with result
+            setNodes((nds) => nds.map(n =>
+                n.id === genCardId
+                    ? { ...n, data: { status: 'success', imageUrl: `data:${result.mimeType};base64,${result.image}` } }
+                    : n
+            ));
+
+            // Reset state
+            setShootStep('idle');
+            setShootingWhiteboardId(null);
+            setSelectedShootModel(null);
+            setShootPrompt('');
+
+        } catch (error) {
+            console.error('Shoot generation error:', error);
+
+            // Update GenerationCard with error
+            setNodes((nds) => nds.map(n =>
+                n.id === genCardId
+                    ? { ...n, data: { status: 'error', errorMessage: error instanceof Error ? error.message : 'Unknown error' } }
+                    : n
+            ));
+
+            setShootStep('idle');
+        }
+    }, [shootingWhiteboardId, selectedShootModel, shootPrompt, nodes, setNodes, setEdges]);
 
     // Filter options
     const ethnicityOptions = useMemo(() => {
@@ -1006,6 +1276,56 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                             >
                                 <Sparkles className="w-4 h-4" />
                                 Generate {stylingOutfitCount} Outfit{stylingOutfitCount > 1 ? 's' : ''}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Shoot Prompt Input Modal */}
+            {shootStep === 'inputPrompt' && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-card-dark border border-border-dark rounded-2xl w-full max-w-md p-6 shadow-2xl">
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="flex items-center gap-2">
+                                <span className="text-2xl">📸</span>
+                                <h3 className="text-lg font-bold text-white">Shoot Settings</h3>
+                            </div>
+                            <button
+                                onClick={() => { setShootStep('selectModel'); setShootPrompt(''); }}
+                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5 text-text-muted" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-green-400">✓</span>
+                                    <span className="text-white/80 text-sm">Model Selected</span>
+                                </div>
+                                {selectedShootModel && (
+                                    <img src={selectedShootModel.image} alt="" className="w-12 h-16 object-cover rounded-lg" />
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-text-muted mb-2">Additional Requirements (optional)</label>
+                                <textarea
+                                    value={shootPrompt}
+                                    onChange={(e) => setShootPrompt(e.target.value)}
+                                    placeholder="e.g., outdoor setting, walking pose, warm lighting..."
+                                    className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-3 text-white outline-none focus:border-primary resize-none h-24"
+                                />
+                            </div>
+
+                            <button
+                                onClick={executeShoot}
+                                className="w-full py-3 bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white rounded-lg font-bold flex items-center justify-center gap-2 transition-colors"
+                            >
+                                <span>🚀</span>
+                                Generate Look
                             </button>
                         </div>
                     </div>
