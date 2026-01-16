@@ -804,8 +804,12 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                                     min={1}
                                     max={10}
                                     value={stylingOutfitCount}
-                                    onChange={(e) => setStylingOutfitCount(Math.max(1, Math.min(10, Number(e.target.value))))}
-                                    className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-2 text-white outline-none focus:border-primary"
+                                    onChange={(e) => setStylingOutfitCount(Number(e.target.value) || 0)}
+                                    onBlur={(e) => {
+                                        const val = Math.max(1, Math.min(10, Number(e.target.value) || 1));
+                                        setStylingOutfitCount(val);
+                                    }}
+                                    className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-2 text-white outline-none focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
                             </div>
 
