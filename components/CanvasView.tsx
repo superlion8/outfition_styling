@@ -176,6 +176,9 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
     const [activeTool, setActiveTool] = useState<'select' | 'pan'>('pan');
     const [assetTab, setAssetTab] = useState<'wardrobe' | 'uploads' | 'templates'>('wardrobe');
 
+    // Track drag start positions for "copy on drag" behavior
+    const dragStartPosRef = useRef<Record<string, { x: number; y: number }>>({});
+
     // Model selector modal state
     const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
     const [editingModelNodeId, setEditingModelNodeId] = useState<string | null>(null);
@@ -640,6 +643,16 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         } catch (error) {
             console.error('Styling generation error:', error);
             alert(`Generating outfits failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+            // Rollback: Remove the empty whiteboards we just created
+            /* 
+               We need to remove the specific whiteboards we added. 
+               Since we don't have the explicit IDs captured in this scope easily without refactoring,
+               we can filter out nodes that match the ID pattern we just used or rely on cleanNodes logic next time.
+               But better to clean up now.
+            */
+            setNodes((nds) => nds.filter(n => !n.id.startsWith('styling-wb-')));
+
             setStylingStep('config');
         }
     }, [stylingItems, nodes, stylingOutfitCount, stylingPrompt, fitView, setNodes]);
@@ -670,6 +683,13 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         setSelectedNodes(selectedNds.map(n => n.id));
     }, []);
 
+    // Capture initial position on drag start
+    const handleNodeDragStart = useCallback((_event: React.MouseEvent, node: Node) => {
+        if (node.type === 'canvasItem') {
+            dragStartPosRef.current[node.id] = { ...node.position };
+        }
+    }, []);
+
     // Handle node drag stop - detect if dropped on whiteboard
     const handleNodeDragStop = useCallback((_event: React.MouseEvent, node: Node) => {
         // Only process canvasItem nodes (thumbnails)
@@ -677,6 +697,8 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
         // Find whiteboards
         const whiteboards = nodes.filter(n => n.type === 'whiteboard');
+
+        let droppedOnWhiteboard = false;
 
         for (const wb of whiteboards) {
             const wbWidth = 300;
@@ -694,29 +716,45 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 nodeCenter.y >= wb.position.y &&
                 nodeCenter.y <= wb.position.y + wbHeight
             ) {
-                // Convert to resizable image inside whiteboard
+                droppedOnWhiteboard = true;
+
+                // Convert to resizable image inside whiteboard (COPY)
                 const imageData = node.data as CanvasItemData;
+
+                // 1. Create NEW node in whiteboard
+                const newNode: Node<ResizableImageData> = {
+                    id: `resizable-${Date.now()}`,
+                    type: 'resizableImage',
+                    position: {
+                        x: nodeCenter.x - wb.position.x - 40,
+                        y: nodeCenter.y - wb.position.y - 40,
+                    },
+                    data: { imageUrl: imageData.imageUrl },
+                    parentId: wb.id,
+                    extent: 'parent',
+                    style: { width: 80, height: 100 },
+                };
+
+                // 2. Reset the dragged node to its original position (Snap back)
+                const startPos = dragStartPosRef.current[node.id];
+
                 setNodes((nds) => {
-                    // Remove old node
-                    const filtered = nds.filter(n => n.id !== node.id);
-                    // Add new resizable image as child of whiteboard
-                    const newNode: Node<ResizableImageData> = {
-                        id: `resizable-${Date.now()}`,
-                        type: 'resizableImage',
-                        position: {
-                            x: nodeCenter.x - wb.position.x - 40,
-                            y: nodeCenter.y - wb.position.y - 40,
-                        },
-                        data: { imageUrl: imageData.imageUrl },
-                        parentId: wb.id,
-                        extent: 'parent',
-                        style: { width: 80, height: 100 },
-                    };
-                    return [...filtered, newNode];
+                    // Update the dragged node's position back to start
+                    const resetNodes = nds.map(n => {
+                        if (n.id === node.id && startPos) {
+                            return { ...n, position: { ...startPos } };
+                        }
+                        return n;
+                    });
+
+                    return [...resetNodes, newNode];
                 });
+
                 break;
             }
         }
+
+        // Clean up ref if needed, or leave it for next drag
     }, [nodes, setNodes]);
 
     // Group wardrobe items by category
@@ -866,6 +904,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
                     onSelectionChange={onSelectionChange}
+                    onNodeDragStart={handleNodeDragStart}
                     onNodeDragStop={handleNodeDragStop}
                     nodeTypes={nodeTypes}
                     fitView
