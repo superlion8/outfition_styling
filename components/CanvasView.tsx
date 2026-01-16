@@ -483,6 +483,10 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 throw new Error('No outfits generated');
             }
 
+            // Debug: Log what VLM returned
+            console.log('VLM Result:', JSON.stringify(result, null, 2));
+            console.log('Available stylingItems:', stylingItems.map(i => ({ index: i.index, nodeId: i.nodeId })));
+
             // Step 6: Fill whiteboards with animated fly effect
             const imageWidth = 80;
             const imageHeight = 80;
@@ -512,9 +516,15 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 // Store reason for this whiteboard
                 outfitReasons.set(wbId, outfit.reason || '');
 
+                // Debug: Log each outfit's indices
+                console.log(`Outfit ${outfitIdx + 1} indices:`, outfit.selectedIndices);
+
                 outfit.selectedIndices.forEach((idx, imgIdx) => {
                     const item = stylingItems.find(i => i.index === idx);
-                    if (!item) return;
+                    if (!item) {
+                        console.warn(`Index ${idx} not found in stylingItems!`);
+                        return;
+                    }
 
                     const imgCol = imgIdx % cols;
                     const imgRow = Math.floor(imgIdx / cols);
