@@ -516,7 +516,11 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             const minY = Math.min(...nodes.map(n => n.position.y)) || 0;
             const maxPerColumn = 4;
 
-            // Create whiteboards if needed (actually they should be created here)
+            // Remove ANY existing styling nodes (whiteboards or images) to prevent duplicates
+            // We filter out any node whose ID starts with 'styling-'
+            const cleanNodes = nodes.filter(n => !n.id.startsWith('styling-'));
+
+            // Create whiteboards
             const newNodes: Node[] = [];
             const whiteboardIds: string[] = [];
 
@@ -539,8 +543,8 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 });
             }
 
-            // Add whiteboards first
-            setNodes((nds) => [...nds, ...newNodes]);
+            // Add whiteboards first (APPEND to cleaned nodes)
+            setNodes([...cleanNodes, ...newNodes]);
 
             // Wait a tick for nodes to be rendered
             await new Promise(resolve => setTimeout(resolve, 100));
