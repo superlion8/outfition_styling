@@ -79,7 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Main instruction
         let mainPrompt = `你是一个专业的服装搭配师。以下截图是一个服装搭配库，每件单品左上角都有一个紫色编号标签 (#1, #2, #3...)。
 
-请你基于时尚潮流趋势和这个库里衣服的风格，给出 ${outfitCount} 套服装搭配的建议。`;
+你要充分查看并理解服装搭配库里的每一件商品的类型、风格等元素，然后基于时尚潮流趋势，给出 ${outfitCount} 套服装搭配的建议。`;
 
         // Add user requirements if provided
         if (userPrompt) {
@@ -90,9 +90,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         mainPrompt += `
 
-**搭配规则：**
+**搭配规则（必须保证）：**
 1. 每一套搭配需要 2-5 件商品
-2. 搭配要是一套完整的 look，避免出现两个包、两条裤子、两件外套这种不合理的搭配
+2. 搭配要是一套完整的 look，要避免出现两个包、两条裤子、两双鞋这种不合理的 look（必须保证）
 3. 优先考虑颜色协调、风格统一
 
 **服装搭配库截图：**

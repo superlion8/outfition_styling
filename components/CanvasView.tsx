@@ -375,7 +375,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
         // Whiteboard sizing
         const whiteboardWidth = 420;
-        const whiteboardHeight = 420;
+        const whiteboardHeight = 350;
         const whiteboardGapX = 25;
         const whiteboardGapY = 25;
         const startX = maxX + 100;
