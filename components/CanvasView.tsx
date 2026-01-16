@@ -426,9 +426,52 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
     const handleConfirmScreenshot = useCallback(async () => {
         if (!screenshotPreview) return;
 
-        const screenshot = screenshotPreview;
+        const screenshot = screenshotPreview; // Capture value before clearing state
         setScreenshotPreview(null);
         setStylingStep('generating');
+
+        // Step 5.1: Create whiteboards immediately (Loading State)
+        const whiteboardWidth = 420;
+        const whiteboardHeight = 300;
+        const whiteboardGapX = 25;
+        const whiteboardGapY = 25;
+        const startX = Math.max(...nodes.map(n => n.position.x + (n.measured?.width || 0)), 0) + 100;
+        const minY = Math.min(...nodes.map(n => n.position.y)) || 0;
+        const maxPerColumn = 4;
+
+        // Clean up old styling nodes
+        const cleanNodes = nodes.filter(n => !n.id.startsWith('styling-'));
+
+        // Generate new whiteboards
+        const newNodes: Node[] = [];
+        const whiteboardIds: string[] = [];
+
+        for (let i = 0; i < stylingOutfitCount; i++) {
+            const wbId = `styling-wb-${Date.now()}-${i}`;
+            whiteboardIds.push(wbId);
+            const col = Math.floor(i / maxPerColumn);
+            const row = i % maxPerColumn;
+
+            newNodes.push({
+                id: wbId,
+                type: 'whiteboard',
+                position: {
+                    x: startX + col * (whiteboardWidth + whiteboardGapX),
+                    y: minY + row * (whiteboardHeight + whiteboardGapY),
+                },
+                data: { label: `Look ${i + 1}` },
+                style: { width: whiteboardWidth, height: whiteboardHeight },
+                draggable: false, // Lock during generation
+            });
+        }
+
+        // Add whiteboards to canvas immediately
+        setNodes([...cleanNodes, ...newNodes]);
+
+        // Zoom to show new workspace
+        setTimeout(() => {
+            fitView({ padding: 0.2, duration: 800 });
+        }, 100);
 
         const callApi = async (retries = 2): Promise<any> => {
             const response = await fetch('/api/canvas-styling', {
@@ -474,48 +517,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             console.log('Available stylingItems:', stylingItems.map(i => ({ index: i.index, nodeId: i.nodeId })));
 
             // Step 6: Fill whiteboards with animated fly effect
-            const whiteboardWidth = 420;
-            const whiteboardHeight = 300;
-            const whiteboardGapX = 25;
-            const whiteboardGapY = 25;
-            const startX = Math.max(...nodes.map(n => n.position.x + (n.measured?.width || 0)), 0) + 100;
-            const minY = Math.min(...nodes.map(n => n.position.y)) || 0;
-            const maxPerColumn = 4;
-
-            // Remove ANY existing styling nodes (whiteboards or images) to prevent duplicates
-            // We filter out any node whose ID starts with 'styling-'
-            const cleanNodes = nodes.filter(n => !n.id.startsWith('styling-'));
-
-            // Create whiteboards
-            const newNodes: Node[] = [];
-            const whiteboardIds: string[] = [];
-
-            for (let i = 0; i < stylingOutfitCount; i++) {
-                const wbId = `styling-wb-${Date.now()}-${i}`;
-                whiteboardIds.push(wbId);
-                const col = Math.floor(i / maxPerColumn);
-                const row = i % maxPerColumn;
-
-                newNodes.push({
-                    id: wbId,
-                    type: 'whiteboard',
-                    position: {
-                        x: startX + col * (whiteboardWidth + whiteboardGapX),
-                        y: minY + row * (whiteboardHeight + whiteboardGapY),
-                    },
-                    data: { label: `Look ${i + 1}` },
-                    style: { width: whiteboardWidth, height: whiteboardHeight },
-                    draggable: false, // temporarily lock
-                });
-            }
-
-            // Add whiteboards first (APPEND to cleaned nodes)
-            setNodes([...cleanNodes, ...newNodes]);
-
-            // Wait a tick for nodes to be rendered
-            await new Promise(resolve => setTimeout(resolve, 100));
-            // Force fit view to see whiteboards
-            fitView({ padding: 0.2, duration: 800 });
+            // Note: Whiteboards are already created in Step 5.1, we just fill them now.
 
             // Image sizing
             const imageWidth = 80;
