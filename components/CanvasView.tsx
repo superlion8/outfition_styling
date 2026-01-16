@@ -380,7 +380,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         const whiteboardGapY = 25;
         const startX = maxX + 100;
         const startY = minY;
-        const maxPerColumn = 5;
+        const maxPerColumn = 4;
 
         // Step 1: Create empty whiteboards immediately
         const whiteboardIds: string[] = [];
