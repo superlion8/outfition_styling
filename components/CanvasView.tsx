@@ -362,8 +362,51 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
         setStylingStep('generating');
 
+        // Calculate bounding box of selected items for positioning
+        const selectedNodePositions = nodes.filter(n => stylingItems.some(item => item.nodeId === n.id));
+        let maxX = -Infinity;
+        let minY = Infinity;
+        selectedNodePositions.forEach(n => {
+            const nodeWidth = 40;
+            if (n.position.x + nodeWidth > maxX) maxX = n.position.x + nodeWidth;
+            if (n.position.y < minY) minY = n.position.y;
+        });
+
+        // Whiteboard sizing (smaller)
+        const whiteboardWidth = 60;
+        const whiteboardHeight = 75;
+        const whiteboardGapX = 15;
+        const whiteboardGapY = 15;
+        const startX = maxX + 60;
+        const startY = minY;
+        const maxPerColumn = 5;
+
+        // Step 1: Create empty whiteboards immediately
+        const whiteboardIds: string[] = [];
+        const emptyWhiteboards: Node[] = [];
+
+        for (let i = 0; i < stylingOutfitCount; i++) {
+            const wbId = `styling-wb-${Date.now()}-${i}`;
+            whiteboardIds.push(wbId);
+            const col = Math.floor(i / maxPerColumn);
+            const row = i % maxPerColumn;
+
+            emptyWhiteboards.push({
+                id: wbId,
+                type: 'whiteboard',
+                position: {
+                    x: startX + col * (whiteboardWidth + whiteboardGapX),
+                    y: startY + row * (whiteboardHeight + whiteboardGapY),
+                },
+                data: { label: `Look ${i + 1}` },
+                style: { zIndex: -1, width: whiteboardWidth, height: whiteboardHeight },
+            });
+        }
+
+        setNodes((nds) => [...nds, ...emptyWhiteboards]);
+
         try {
-            // Step 1: Temporarily add index overlays to selected nodes
+            // Step 2: Add index overlays
             const indexOverlays: HTMLDivElement[] = [];
             const reactFlowViewport = reactFlowWrapper.current.querySelector('.react-flow__viewport');
 
@@ -384,7 +427,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 });
             }
 
-            // Step 2: Capture screenshot
+            // Step 3: Capture screenshot
             const html2canvas = (await import('html2canvas')).default;
             const canvas = await html2canvas(reactFlowWrapper.current, {
                 backgroundColor: '#1a1625',
@@ -392,10 +435,10 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             });
             const screenshot = canvas.toDataURL('image/png');
 
-            // Step 3: Remove overlays
+            // Step 4: Remove overlays
             indexOverlays.forEach(el => el.remove());
 
-            // Step 4: Call API with screenshot
+            // Step 5: Call API
             const response = await fetch('/api/canvas-styling', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -418,49 +461,17 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 throw new Error('No outfits generated');
             }
 
-            // Calculate bounding box of selected items
-            const selectedNodePositions = nodes.filter(n => stylingItems.some(item => item.nodeId === n.id));
-            let maxX = -Infinity;
-            let minY = Infinity;
-            selectedNodePositions.forEach(n => {
-                const nodeWidth = 40; // canvasItem width
-                if (n.position.x + nodeWidth > maxX) maxX = n.position.x + nodeWidth;
-                if (n.position.y < minY) minY = n.position.y;
-            });
-
-            // Create smaller whiteboards arranged vertically in columns
-            const whiteboardWidth = 120;
-            const whiteboardHeight = 150;
-            const whiteboardGapX = 20;
-            const whiteboardGapY = 20;
-            const startX = maxX + 80; // Right of selected items
-            const startY = minY;
-            const maxPerColumn = 4; // Max whiteboards per column
-
-            const newNodes: Node[] = [];
+            // Step 6: Fill whiteboards with items
+            const imageNodes: Node[] = [];
+            const imageWidth = 18;
+            const imageHeight = 22;
+            const cols = 2;
+            const gap = 2;
+            const offsetY = 15;
 
             result.outfits.forEach((outfit: { selectedIndices: number[]; reason: string }, outfitIdx: number) => {
-                // Create whiteboard
-                const wbId = `styling-wb-${Date.now()}-${outfitIdx}`;
-                const col = Math.floor(outfitIdx / maxPerColumn);
-                const row = outfitIdx % maxPerColumn;
-                const wbX = startX + col * (whiteboardWidth + whiteboardGapX);
-                const wbY = startY + row * (whiteboardHeight + whiteboardGapY);
-
-                newNodes.push({
-                    id: wbId,
-                    type: 'whiteboard',
-                    position: { x: wbX, y: wbY },
-                    data: { label: `Look ${outfitIdx + 1}` },
-                    style: { zIndex: -1, width: whiteboardWidth, height: whiteboardHeight },
-                });
-
-                // Add selected images to whiteboard (smaller)
-                const imageWidth = 35;
-                const imageHeight = 45;
-                const cols = 2;
-                const gap = 5;
-                const offsetY = 25; // Below label
+                const wbId = whiteboardIds[outfitIdx];
+                if (!wbId) return;
 
                 outfit.selectedIndices.forEach((idx, imgIdx) => {
                     const item = stylingItems.find(i => i.index === idx);
@@ -469,11 +480,11 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                     const imgCol = imgIdx % cols;
                     const imgRow = Math.floor(imgIdx / cols);
 
-                    newNodes.push({
+                    imageNodes.push({
                         id: `styling-img-${Date.now()}-${outfitIdx}-${imgIdx}`,
                         type: 'resizableImage',
                         position: {
-                            x: 10 + imgCol * (imageWidth + gap),
+                            x: 5 + imgCol * (imageWidth + gap),
                             y: offsetY + imgRow * (imageHeight + gap),
                         },
                         data: { imageUrl: item.imageUrl },
@@ -484,8 +495,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 });
             });
 
-            // Add all new nodes
-            setNodes((nds) => [...nds, ...newNodes]);
+            setNodes((nds) => [...nds, ...imageNodes]);
 
             // Reset styling state
             setStylingStep('idle');
