@@ -76,15 +76,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Build prompt with screenshot
         const promptParts: any[] = [];
 
-        promptParts.push({
-            text: `你是一位专业的时尚搭配师。我将提供一张服装单品截图，图中包含 ${itemCount} 件服装单品。
-每件单品左上角都有一个紫色编号标签 (#1, #2, #3...)。
+        // Main instruction
+        let mainPrompt = `你是一个专业的服装搭配师。以下截图是一个服装搭配库，每件单品左上角都有一个紫色编号标签 (#1, #2, #3...)。
 
-请仔细观察截图中的所有单品，根据编号为我搭配 ${outfitCount} 组完整的穿搭方案。
+请你基于时尚潮流趋势和这个库里衣服的风格，给出 ${outfitCount} 套服装搭配的建议。`;
 
-**服装单品截图：**
-`
-        });
+        // Add user requirements if provided
+        if (userPrompt) {
+            mainPrompt += `
+
+额外要求：${userPrompt}`;
+        }
+
+        mainPrompt += `
+
+**搭配规则：**
+1. 每一套搭配需要 2-5 件商品
+2. 搭配要是一套完整的 look，避免出现两个包、两条裤子、两件外套这种不合理的搭配
+3. 优先考虑颜色协调、风格统一
+
+**服装搭配库截图：**
+`;
+
+        promptParts.push({ text: mainPrompt });
 
         // Add screenshot image (auto-detect mime type)
         const mimeMatch = screenshot.match(/^data:(image\/\w+);base64,/);
@@ -97,39 +111,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
         });
 
-        // Add user prompt if provided
-        if (userPrompt) {
-            promptParts.push({
-                text: `\n\n**用户的特别要求：**\n${userPrompt}\n请务必在搭配时遵从上述要求。\n`
-            });
-        }
-
         // Output format instruction
         promptParts.push({
             text: `
 
-**搭配要求：**
-1. 必须生成 **${outfitCount}** 组搭配
-2. 每组搭配选择 2-4 件单品组成一套穿搭
-3. 优先考虑颜色协调、风格统一
-4. 如果单品数量不足，可以重复使用某些单品
-
 **输出格式：**
-请严格以 JSON 格式输出，不要包含任何其他文字说明：
+请严格以 JSON 格式输出每套 outfit、每套 outfit 的商品编号、选择这套搭配的中文原因：
 {
   "outfits": [
     {
       "selectedIndices": [1, 3, 5],
-      "reason": "这套搭配采用了...（请用中文简要说明搭配理由）"
-    },
-    {
-      "selectedIndices": [2, 4],
-      "reason": "这套搭配...（中文理由）"
+      "reason": "搭配理由（中文，简洁说明为什么选择这几件单品）"
     }
   ]
 }
 
-注意：selectedIndices 数组包含选中单品的编号 (#1, #2, ... 对应数字 1, 2, ...)。`
+注意：selectedIndices 数组包含选中单品的编号 (#1, #2, ... 对应数字 1, 2, ...)。
+必须生成 ${outfitCount} 组搭配。`
         });
 
         // Call Gemini API
