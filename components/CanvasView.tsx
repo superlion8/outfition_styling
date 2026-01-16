@@ -54,13 +54,20 @@ const CanvasItemNode: React.FC<NodeProps<Node<CanvasItemData>>> = ({ data, selec
 // Whiteboard Node (container for grouping items)
 interface WhiteboardData {
     label: string;
+    hasModelCard?: boolean;
     [key: string]: unknown;
 }
 
 const WhiteboardNode: React.FC<NodeProps<Node<WhiteboardData>>> = ({ id, data, selected }) => {
     const handleShootClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        window.dispatchEvent(new CustomEvent('startShoot', { detail: { whiteboardId: id } }));
+        if (data.hasModelCard) {
+            // Already has model card, trigger confirm
+            window.dispatchEvent(new CustomEvent('confirmShoot', { detail: { whiteboardId: id } }));
+        } else {
+            // Start shoot workflow
+            window.dispatchEvent(new CustomEvent('startShoot', { detail: { whiteboardId: id } }));
+        }
     };
 
     return (
@@ -74,15 +81,22 @@ const WhiteboardNode: React.FC<NodeProps<Node<WhiteboardData>>> = ({ id, data, s
             <div className="absolute top-2 left-3 text-gray-400 text-xs font-medium">
                 {data.label || 'Whiteboard'}
             </div>
-            {/* Elegant Shoot Button */}
+            {/* Shoot / Confirm Shoot Button */}
             <button
                 onClick={handleShootClick}
                 className="absolute top-2 right-2 group"
             >
-                <div className="px-3 py-1.5 bg-black/80 hover:bg-black text-white text-[10px] font-medium tracking-wider uppercase rounded-full border border-white/20 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
-                    <span>Shoot</span>
-                </div>
+                {data.hasModelCard ? (
+                    <div className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-[10px] font-bold tracking-wider uppercase rounded-full shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center gap-1.5">
+                        <span>Confirm Shoot</span>
+                        <span>→</span>
+                    </div>
+                ) : (
+                    <div className="px-3 py-1.5 bg-black/80 hover:bg-black text-white text-[10px] font-medium tracking-wider uppercase rounded-full border border-white/20 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                        <span>Shoot</span>
+                    </div>
+                )}
             </button>
         </div>
     );
@@ -176,14 +190,7 @@ const ModelCardNode: React.FC<NodeProps<Node<ModelCardData>>> = ({ id, data }) =
         }));
     };
 
-    const handleConfirmShoot = () => {
-        window.dispatchEvent(new CustomEvent('confirmShoot', {
-            detail: { whiteboardId: data.whiteboardId }
-        }));
-    };
-
     const models = modelsDataRaw as Model[];
-    // Default to first model if none selected
     const selectedModel = data.selectedModelId
         ? models.find(m => m.model_id === data.selectedModelId)
         : models[0];
@@ -191,41 +198,24 @@ const ModelCardNode: React.FC<NodeProps<Node<ModelCardData>>> = ({ id, data }) =
 
     return (
         <div className="bg-[#1e1e2e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden w-[180px]">
-            {/* Header */}
             <div className="px-3 py-2 bg-white/5 border-b border-white/10 flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center">
                     <span className="text-[8px]">👤</span>
                 </div>
                 <span className="text-white/90 text-xs font-medium tracking-wide">Model Preview</span>
             </div>
-
-            {/* Model Image */}
             <div className="p-3">
                 <div className="aspect-[3/4] rounded-xl overflow-hidden border border-white/10 shadow-inner">
-                    <img
-                        src={modelImage}
-                        alt="Selected Model"
-                        className="w-full h-full object-cover"
-                    />
+                    <img src={modelImage} alt="Selected Model" className="w-full h-full object-cover" />
                 </div>
             </div>
-
-            {/* Actions */}
-            <div className="px-3 pb-3 space-y-2">
+            <div className="px-3 pb-3">
                 <button
                     onClick={handleOpenPicker}
                     className="w-full py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/70 hover:text-white text-xs font-medium transition-all flex items-center justify-center gap-2"
                 >
                     <span>✨</span>
                     <span>Customize Avatar</span>
-                </button>
-
-                <button
-                    onClick={handleConfirmShoot}
-                    className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-lg text-white text-xs font-bold tracking-wide transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 flex items-center justify-center gap-2"
-                >
-                    <span>Confirm Shoot</span>
-                    <span>→</span>
                 </button>
             </div>
         </div>
@@ -367,7 +357,15 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 animated: true,
             };
 
-            setNodes((nds) => [...nds, modelCardNode]);
+            // Update whiteboard to show hasModelCard and add modelCard node
+            setNodes((nds) => [
+                ...nds.map(n =>
+                    n.id === whiteboardId
+                        ? { ...n, data: { ...n.data, hasModelCard: true } }
+                        : n
+                ),
+                modelCardNode
+            ]);
             setEdges((eds) => [...eds, edge]);
             setShootingWhiteboardId(whiteboardId);
             setShootStep('selectModel');
@@ -472,6 +470,15 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 scale: 2,
             });
             const outfitScreenshot = canvas.toDataURL('image/jpeg', 0.8);
+
+            // Debug logging
+            console.log('📸 Screenshot captured:', {
+                width: canvas.width,
+                height: canvas.height,
+                dataLength: outfitScreenshot.length,
+                modelImage: selectedShootModel.image,
+                userPrompt: shootPrompt
+            });
 
             // Call API
             const response = await fetch('/api/shoot-whiteboard', {
@@ -1370,8 +1377,8 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                                         key={model.model_id}
                                         onClick={() => handleShootModelSelect(model)}
                                         className={`aspect-[3/4] rounded-xl overflow-hidden cursor-pointer border-2 transition-all hover:scale-105 hover:border-primary ${selectedShootModel?.id === model.model_id
-                                                ? 'border-emerald-400 ring-2 ring-emerald-400/50'
-                                                : 'border-transparent'
+                                            ? 'border-emerald-400 ring-2 ring-emerald-400/50'
+                                            : 'border-transparent'
                                             }`}
                                     >
                                         <img src={model.image} alt="" className="w-full h-full object-cover" />
