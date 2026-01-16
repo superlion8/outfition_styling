@@ -375,9 +375,9 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
         // Whiteboard sizing (wider, shorter)
         const whiteboardWidth = 280;
-        const whiteboardHeight = 70;
-        const whiteboardGapX = 40;
-        const whiteboardGapY = 50;
+        const whiteboardHeight = 105;
+        const whiteboardGapX = 25;
+        const whiteboardGapY = 25;
         const startX = maxX + 100;
         const startY = minY;
         const maxPerColumn = 5;
@@ -485,11 +485,11 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
             // Step 6: Fill whiteboards with items (single row, horizontal layout)
             const imageNodes: Node[] = [];
-            const imageWidth = 40;
-            const imageHeight = 40;
+            const imageWidth = 80;
+            const imageHeight = 80;
             const cols = 6; // All in one row
-            const gap = 4;
-            const offsetY = 10;
+            const gap = 8;
+            const offsetY = 20; // Below label
 
             result.outfits.forEach((outfit: { selectedIndices: number[]; reason: string }, outfitIdx: number) => {
                 const wbId = whiteboardIds[outfitIdx];
