@@ -444,6 +444,30 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             // Step 4: Remove overlays
             indexOverlays.forEach(el => el.remove());
 
+            // DEBUG: Show screenshot preview for verification
+            const debugPreview = window.confirm(
+                'Screenshot captured with index labels. Click OK to continue, or Cancel to abort.\n\n' +
+                'The screenshot will open in a new tab for inspection.'
+            );
+            if (debugPreview) {
+                const win = window.open();
+                if (win) {
+                    win.document.write(`
+                        <html><head><title>VLM Screenshot Preview</title></head>
+                        <body style="margin:0; background:#1a1625;">
+                            <img src="${screenshot}" style="max-width:100%; height:auto;" />
+                            <p style="color:white; padding:20px;">
+                                Items count: ${stylingItems.length}<br/>
+                                Indices: ${stylingItems.map(i => i.index).join(', ')}
+                            </p>
+                        </body></html>
+                    `);
+                }
+            } else {
+                setStylingStep('config');
+                return;
+            }
+
             // Step 5: Call API with retry for cold start
             const callApi = async (retries = 2): Promise<any> => {
                 const response = await fetch('/api/canvas-styling', {
