@@ -74,13 +74,15 @@ const WhiteboardNode: React.FC<NodeProps<Node<WhiteboardData>>> = ({ id, data, s
             <div className="absolute top-2 left-3 text-gray-400 text-xs font-medium">
                 {data.label || 'Whiteboard'}
             </div>
-            {/* Shoot Button */}
+            {/* Elegant Shoot Button */}
             <button
                 onClick={handleShootClick}
-                className="absolute top-2 right-2 px-2 py-1 bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white text-[10px] font-bold rounded-md shadow-lg transition-all hover:scale-105 flex items-center gap-1"
+                className="absolute top-2 right-2 group"
             >
-                <span>📸</span>
-                <span>Shoot</span>
+                <div className="px-3 py-1.5 bg-black/80 hover:bg-black text-white text-[10px] font-medium tracking-wider uppercase rounded-full border border-white/20 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                    <span>Shoot</span>
+                </div>
             </button>
         </div>
     );
@@ -158,17 +160,19 @@ const ModelSelectorNode: React.FC<NodeProps<Node<ModelSelectorData>>> = ({ id, d
     );
 };
 
-// Model Card Node (for shooting workflow)
+// Model Card Node (for shooting workflow) - Single model preview style
 interface ModelCardData {
     whiteboardId: string;
     selectedModelId?: string;
+    selectedModelImage?: string;
+    isPickerOpen?: boolean;
     [key: string]: unknown;
 }
 
 const ModelCardNode: React.FC<NodeProps<Node<ModelCardData>>> = ({ id, data }) => {
-    const handleSelectModel = (modelId: string, modelImage: string) => {
-        window.dispatchEvent(new CustomEvent('selectShootModel', {
-            detail: { nodeId: id, whiteboardId: data.whiteboardId, modelId, modelImage }
+    const handleOpenPicker = () => {
+        window.dispatchEvent(new CustomEvent('openModelPicker', {
+            detail: { nodeId: id, whiteboardId: data.whiteboardId }
         }));
     };
 
@@ -179,34 +183,50 @@ const ModelCardNode: React.FC<NodeProps<Node<ModelCardData>>> = ({ id, data }) =
     };
 
     const models = modelsDataRaw as Model[];
-    const displayModels = models.slice(0, 12); // Show first 12 models
+    // Default to first model if none selected
+    const selectedModel = data.selectedModelId
+        ? models.find(m => m.model_id === data.selectedModelId)
+        : models[0];
+    const modelImage = data.selectedModelImage || selectedModel?.image || models[0]?.image;
 
     return (
-        <div className="bg-card-dark border border-white/20 rounded-xl shadow-2xl p-3 w-[280px]">
-            <div className="flex justify-between items-center mb-2">
-                <span className="text-white text-xs font-bold">Select Model</span>
-                {data.selectedModelId && (
-                    <button
-                        onClick={handleConfirmShoot}
-                        className="px-2 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-[10px] font-bold rounded-md"
-                    >
-                        Confirm Shoot ✓
-                    </button>
-                )}
+        <div className="bg-[#1e1e2e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden w-[180px]">
+            {/* Header */}
+            <div className="px-3 py-2 bg-white/5 border-b border-white/10 flex items-center gap-2">
+                <div className="w-4 h-4 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center">
+                    <span className="text-[8px]">👤</span>
+                </div>
+                <span className="text-white/90 text-xs font-medium tracking-wide">Model Preview</span>
             </div>
-            <div className="grid grid-cols-4 gap-1 max-h-[200px] overflow-y-auto">
-                {displayModels.map((m) => (
-                    <div
-                        key={m.model_id}
-                        onClick={() => handleSelectModel(m.model_id, m.image)}
-                        className={`aspect-[3/4] rounded-lg overflow-hidden cursor-pointer border-2 transition-all hover:scale-105 ${data.selectedModelId === m.model_id
-                            ? 'border-green-400 ring-2 ring-green-400/50'
-                            : 'border-transparent hover:border-white/30'
-                            }`}
-                    >
-                        <img src={m.image} alt="" className="w-full h-full object-cover" />
-                    </div>
-                ))}
+
+            {/* Model Image */}
+            <div className="p-3">
+                <div className="aspect-[3/4] rounded-xl overflow-hidden border border-white/10 shadow-inner">
+                    <img
+                        src={modelImage}
+                        alt="Selected Model"
+                        className="w-full h-full object-cover"
+                    />
+                </div>
+            </div>
+
+            {/* Actions */}
+            <div className="px-3 pb-3 space-y-2">
+                <button
+                    onClick={handleOpenPicker}
+                    className="w-full py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/70 hover:text-white text-xs font-medium transition-all flex items-center justify-center gap-2"
+                >
+                    <span>✨</span>
+                    <span>Customize Avatar</span>
+                </button>
+
+                <button
+                    onClick={handleConfirmShoot}
+                    className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-lg text-white text-xs font-bold tracking-wide transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 flex items-center justify-center gap-2"
+                >
+                    <span>Confirm Shoot</span>
+                    <span>→</span>
+                </button>
             </div>
         </div>
     );
@@ -357,34 +377,53 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         return () => window.removeEventListener('startShoot', handleStartShoot as EventListener);
     }, [nodes, setNodes, setEdges]);
 
-    // Handle model selection in ModelCard
+    // State for model picker modal in shoot workflow
+    const [shootModelPickerOpen, setShootModelPickerOpen] = useState(false);
+    const [editingModelCardId, setEditingModelCardId] = useState<string | null>(null);
+
+    // Handle "Customize Avatar" click - open model picker
     useEffect(() => {
-        const handleSelectShootModel = (e: CustomEvent<{ nodeId: string; whiteboardId: string; modelId: string; modelImage: string }>) => {
-            const { nodeId, modelId, modelImage } = e.detail;
-
-            // Update the ModelCard node with selected model
-            setNodes((nds) => nds.map(n =>
-                n.id === nodeId
-                    ? { ...n, data: { ...n.data, selectedModelId: modelId } }
-                    : n
-            ));
-
-            setSelectedShootModel({ id: modelId, image: modelImage });
+        const handleOpenModelPicker = (e: CustomEvent<{ nodeId: string; whiteboardId: string }>) => {
+            setEditingModelCardId(e.detail.nodeId);
+            setShootModelPickerOpen(true);
         };
 
-        window.addEventListener('selectShootModel', handleSelectShootModel as EventListener);
-        return () => window.removeEventListener('selectShootModel', handleSelectShootModel as EventListener);
-    }, [setNodes]);
+        window.addEventListener('openModelPicker', handleOpenModelPicker as EventListener);
+        return () => window.removeEventListener('openModelPicker', handleOpenModelPicker as EventListener);
+    }, []);
+
+    // Handle model selection from picker
+    const handleShootModelSelect = useCallback((model: Model) => {
+        if (!editingModelCardId) return;
+
+        // Update the ModelCard node with selected model
+        setNodes((nds) => nds.map(n =>
+            n.id === editingModelCardId
+                ? { ...n, data: { ...n.data, selectedModelId: model.model_id, selectedModelImage: model.image } }
+                : n
+        ));
+
+        setSelectedShootModel({ id: model.model_id, image: model.image });
+        setShootModelPickerOpen(false);
+        setEditingModelCardId(null);
+    }, [editingModelCardId, setNodes]);
 
     // Handle confirm shoot - show prompt input modal
     useEffect(() => {
         const handleConfirmShoot = (e: CustomEvent<{ whiteboardId: string }>) => {
+            // Set default model if none was explicitly selected
+            if (!selectedShootModel) {
+                const defaultModel = modelsData[0];
+                if (defaultModel) {
+                    setSelectedShootModel({ id: defaultModel.model_id, image: defaultModel.image });
+                }
+            }
             setShootStep('inputPrompt');
         };
 
         window.addEventListener('confirmShoot', handleConfirmShoot as EventListener);
         return () => window.removeEventListener('confirmShoot', handleConfirmShoot as EventListener);
-    }, []);
+    }, [selectedShootModel]);
 
     // Execute the actual generation
     const executeShoot = useCallback(async () => {
@@ -1277,6 +1316,68 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                                 <Sparkles className="w-4 h-4" />
                                 Generate {stylingOutfitCount} Outfit{stylingOutfitCount > 1 ? 's' : ''}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Shoot Model Picker Modal */}
+            {shootModelPickerOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-card-dark border border-border-dark rounded-2xl w-full max-w-2xl p-6 shadow-2xl max-h-[80vh] flex flex-col">
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xl">✨</span>
+                                <h3 className="text-lg font-bold text-white">Choose Your Model</h3>
+                            </div>
+                            <button
+                                onClick={() => { setShootModelPickerOpen(false); setEditingModelCardId(null); }}
+                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5 text-text-muted" />
+                            </button>
+                        </div>
+
+                        {/* Filters */}
+                        <div className="flex gap-4 mb-4 p-3 bg-white/5 rounded-xl">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-text-muted">Ethnicity</span>
+                                <select
+                                    value={ethnicityFilter}
+                                    onChange={(e) => setEthnicityFilter(e.target.value)}
+                                    className="bg-card-dark border border-border-dark text-white rounded-lg px-2 py-1 text-xs"
+                                >
+                                    {ethnicityOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-text-muted">Gender</span>
+                                <select
+                                    value={genderFilter}
+                                    onChange={(e) => setGenderFilter(e.target.value)}
+                                    className="bg-card-dark border border-border-dark text-white rounded-lg px-2 py-1 text-xs"
+                                >
+                                    {genderOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Model Grid */}
+                        <div className="flex-1 overflow-y-auto">
+                            <div className="grid grid-cols-6 gap-2">
+                                {filteredModels.map((model) => (
+                                    <div
+                                        key={model.model_id}
+                                        onClick={() => handleShootModelSelect(model)}
+                                        className={`aspect-[3/4] rounded-xl overflow-hidden cursor-pointer border-2 transition-all hover:scale-105 hover:border-primary ${selectedShootModel?.id === model.model_id
+                                                ? 'border-emerald-400 ring-2 ring-emerald-400/50'
+                                                : 'border-transparent'
+                                            }`}
+                                    >
+                                        <img src={model.image} alt="" className="w-full h-full object-cover" />
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
