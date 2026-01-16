@@ -373,9 +373,9 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             if (n.position.y < minY) minY = n.position.y;
         });
 
-        // Whiteboard sizing (wider, shorter)
+        // Whiteboard sizing
         const whiteboardWidth = 420;
-        const whiteboardHeight = 210;
+        const whiteboardHeight = 420;
         const whiteboardGapX = 25;
         const whiteboardGapY = 25;
         const startX = maxX + 100;
@@ -486,9 +486,9 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             // Step 6: Fill whiteboards with animated fly effect
             const imageWidth = 80;
             const imageHeight = 80;
-            const cols = 6;
-            const gap = 8;
-            const offsetY = 20;
+            const cols = 2; // 2 columns for 2-row layout
+            const gap = 10;
+            const offsetY = 25;
 
             // Collect animation targets
             interface AnimTarget {
