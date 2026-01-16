@@ -174,7 +174,7 @@ const ModelSelectorNode: React.FC<NodeProps<Node<ModelSelectorData>>> = ({ id, d
     );
 };
 
-// Model Card Node (for shooting workflow) - Single model preview style
+// Model Card Node (for shooting workflow) - Matches reference design #2
 interface ModelCardData {
     whiteboardId: string;
     selectedModelId?: string;
@@ -197,24 +197,34 @@ const ModelCardNode: React.FC<NodeProps<Node<ModelCardData>>> = ({ id, data }) =
     const modelImage = data.selectedModelImage || selectedModel?.image || models[0]?.image;
 
     return (
-        <div className="bg-[#1e1e2e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden w-[180px]">
-            <div className="px-3 py-2 bg-white/5 border-b border-white/10 flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center">
-                    <span className="text-[8px]">👤</span>
-                </div>
-                <span className="text-white/90 text-xs font-medium tracking-wide">Model Preview</span>
+        <div className="relative w-[220px] rounded-2xl border-2 border-amber-400/70 shadow-2xl shadow-amber-500/10 overflow-hidden bg-gradient-to-b from-amber-50 to-white">
+            {/* Floating "Model Preview" badge */}
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 px-4 py-1.5 bg-gray-700/90 backdrop-blur-sm rounded-full flex items-center gap-2 shadow-lg">
+                <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span className="text-white text-xs font-medium">Model Preview</span>
             </div>
-            <div className="p-3">
-                <div className="aspect-[3/4] rounded-xl overflow-hidden border border-white/10 shadow-inner">
-                    <img src={modelImage} alt="Selected Model" className="w-full h-full object-cover" />
-                </div>
+
+            {/* Model Image - Full height */}
+            <div className="aspect-[3/4]">
+                <img
+                    src={modelImage}
+                    alt="Selected Model"
+                    className="w-full h-full object-cover"
+                />
             </div>
-            <div className="px-3 pb-3">
+
+            {/* Customize Avatar Button */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[85%]">
                 <button
                     onClick={handleOpenPicker}
-                    className="w-full py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/70 hover:text-white text-xs font-medium transition-all flex items-center justify-center gap-2"
+                    className="w-full py-2.5 bg-gray-100/95 hover:bg-white border border-gray-200 rounded-xl text-gray-700 text-sm font-medium transition-all shadow-lg flex items-center justify-center gap-2"
                 >
-                    <span>✨</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
                     <span>Customize Avatar</span>
                 </button>
             </div>
