@@ -931,14 +931,43 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 </div>
             )}
 
-            {/* Styling Generating Overlay */}
+            {/* Styling Indicator - positioned in canvas, not overlay */}
             {stylingStep === 'generating' && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-                    <div className="text-center">
-                        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                        <p className="text-white font-bold text-lg">Generating Outfits...</p>
-                        <p className="text-text-muted text-sm mt-2">AI is analyzing your wardrobe</p>
+                <div
+                    className="absolute z-20 pointer-events-none"
+                    style={{
+                        left: '50%',
+                        top: '60%',
+                        transform: 'translate(-50%, -50%)',
+                    }}
+                >
+                    <div className="flex flex-col items-center gap-3">
+                        <div className="flex items-center gap-2">
+                            <span
+                                className="text-5xl font-bold italic animate-pulse"
+                                style={{
+                                    background: 'linear-gradient(135deg, #8c30e8 0%, #e83030 50%, #8c30e8 100%)',
+                                    backgroundSize: '200% auto',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    animation: 'gradient-shift 2s ease infinite, pulse 1.5s ease-in-out infinite',
+                                }}
+                            >
+                                Styling
+                            </span>
+                            <span className="text-5xl font-bold italic text-primary animate-bounce" style={{ animationDelay: '0.1s' }}>.</span>
+                            <span className="text-5xl font-bold italic text-primary animate-bounce" style={{ animationDelay: '0.2s' }}>.</span>
+                            <span className="text-5xl font-bold italic text-primary animate-bounce" style={{ animationDelay: '0.3s' }}>.</span>
+                        </div>
+                        <p className="text-text-muted text-sm animate-pulse">AI is thinking...</p>
                     </div>
+                    <style>{`
+                        @keyframes gradient-shift {
+                            0% { background-position: 0% center; }
+                            50% { background-position: 100% center; }
+                            100% { background-position: 0% center; }
+                        }
+                    `}</style>
                 </div>
             )}
 
