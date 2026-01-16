@@ -63,7 +63,7 @@ const WhiteboardNode: React.FC<NodeProps<Node<WhiteboardData>>> = ({ data, selec
                 bg-white rounded-xl shadow-2xl border-2 transition-all duration-200
                 ${selected ? 'border-primary ring-4 ring-primary/30' : 'border-gray-200'}
             `}
-            style={{ width: 300, height: 400, minWidth: 200, minHeight: 200 }}
+            style={{ width: '100%', height: '100%' }}
         >
             <div className="absolute top-2 left-3 text-gray-400 text-xs font-medium">
                 {data.label || 'Whiteboard'}
@@ -374,13 +374,13 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         });
 
         // Whiteboard sizing (wider, shorter)
-        const whiteboardWidth = 270;
-        const whiteboardHeight = 55;
-        const whiteboardGapX = 30;
-        const whiteboardGapY = 40;
-        const startX = maxX + 80;
+        const whiteboardWidth = 280;
+        const whiteboardHeight = 70;
+        const whiteboardGapX = 40;
+        const whiteboardGapY = 50;
+        const startX = maxX + 100;
         const startY = minY;
-        const maxPerColumn = 6;
+        const maxPerColumn = 5;
 
         // Step 1: Create empty whiteboards immediately
         const whiteboardIds: string[] = [];
