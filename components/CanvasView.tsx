@@ -927,41 +927,124 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 </div>
             )}
 
-            {/* Styling Indicator - positioned in canvas, not overlay */}
+            {/* Styling Indicator - futuristic AI style */}
             {stylingStep === 'generating' && (
                 <div
                     className="absolute z-20 pointer-events-none"
                     style={{
                         left: '50%',
-                        top: '60%',
-                        transform: 'translate(-50%, -50%)',
+                        top: '55%',
+                        transform: 'translate(-50%, -50%) rotate(-12deg)',
                     }}
                 >
-                    <div className="flex flex-col items-center gap-3">
-                        <div className="flex items-center gap-2">
+                    <div className="relative">
+                        {/* Main text with glitch effect */}
+                        <div className="relative">
                             <span
-                                className="text-5xl font-bold italic animate-pulse"
+                                className="text-7xl font-black tracking-tight"
                                 style={{
-                                    background: 'linear-gradient(135deg, #8c30e8 0%, #e83030 50%, #8c30e8 100%)',
-                                    backgroundSize: '200% auto',
+                                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                                    background: 'linear-gradient(90deg, #00f0ff 0%, #8c30e8 35%, #ff0080 65%, #00f0ff 100%)',
+                                    backgroundSize: '300% auto',
                                     WebkitBackgroundClip: 'text',
                                     WebkitTextFillColor: 'transparent',
-                                    animation: 'gradient-shift 2s ease infinite, pulse 1.5s ease-in-out infinite',
+                                    animation: 'gradient-x 3s linear infinite',
+                                    textShadow: '0 0 80px rgba(140, 48, 232, 0.8)',
+                                    letterSpacing: '-0.02em',
                                 }}
                             >
-                                Styling
+                                STYLING
                             </span>
-                            <span className="text-5xl font-bold italic text-primary animate-bounce" style={{ animationDelay: '0.1s' }}>.</span>
-                            <span className="text-5xl font-bold italic text-primary animate-bounce" style={{ animationDelay: '0.2s' }}>.</span>
-                            <span className="text-5xl font-bold italic text-primary animate-bounce" style={{ animationDelay: '0.3s' }}>.</span>
+                            {/* Glitch layers */}
+                            <span
+                                className="absolute inset-0 text-7xl font-black tracking-tight opacity-50"
+                                style={{
+                                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                                    color: '#00f0ff',
+                                    animation: 'glitch-1 0.3s infinite',
+                                    clipPath: 'inset(40% 0 20% 0)',
+                                    letterSpacing: '-0.02em',
+                                }}
+                            >
+                                STYLING
+                            </span>
+                            <span
+                                className="absolute inset-0 text-7xl font-black tracking-tight opacity-50"
+                                style={{
+                                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                                    color: '#ff0080',
+                                    animation: 'glitch-2 0.3s infinite',
+                                    clipPath: 'inset(60% 0 0% 0)',
+                                    letterSpacing: '-0.02em',
+                                }}
+                            >
+                                STYLING
+                            </span>
                         </div>
-                        <p className="text-text-muted text-sm animate-pulse">AI is thinking...</p>
+
+                        {/* Scanning line */}
+                        <div
+                            className="absolute inset-0 overflow-hidden"
+                            style={{ animation: 'scan 2s linear infinite' }}
+                        >
+                            <div
+                                className="w-full h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent"
+                                style={{ boxShadow: '0 0 20px 5px rgba(0, 240, 255, 0.5)' }}
+                            />
+                        </div>
+
+                        {/* Dots */}
+                        <div className="flex gap-3 mt-4 justify-center">
+                            {[0, 1, 2].map(i => (
+                                <div
+                                    key={i}
+                                    className="w-3 h-3 rounded-full"
+                                    style={{
+                                        background: 'linear-gradient(135deg, #8c30e8, #ff0080)',
+                                        animation: `dot-pulse 1.4s ease-in-out ${i * 0.2}s infinite`,
+                                        boxShadow: '0 0 20px rgba(140, 48, 232, 0.8)',
+                                    }}
+                                />
+                            ))}
+                        </div>
+
+                        {/* Subtitle */}
+                        <p
+                            className="text-center mt-4 text-sm font-medium tracking-widest uppercase"
+                            style={{
+                                color: 'rgba(255,255,255,0.6)',
+                                animation: 'pulse 2s ease-in-out infinite',
+                            }}
+                        >
+                            ◆ AI Processing ◆
+                        </p>
                     </div>
+
                     <style>{`
-                        @keyframes gradient-shift {
+                        @keyframes gradient-x {
                             0% { background-position: 0% center; }
-                            50% { background-position: 100% center; }
-                            100% { background-position: 0% center; }
+                            100% { background-position: 300% center; }
+                        }
+                        @keyframes glitch-1 {
+                            0%, 100% { transform: translateX(0); }
+                            20% { transform: translateX(-3px); }
+                            40% { transform: translateX(3px); }
+                            60% { transform: translateX(-2px); }
+                            80% { transform: translateX(2px); }
+                        }
+                        @keyframes glitch-2 {
+                            0%, 100% { transform: translateX(0); }
+                            25% { transform: translateX(2px); }
+                            50% { transform: translateX(-3px); }
+                            75% { transform: translateX(3px); }
+                        }
+                        @keyframes scan {
+                            0% { transform: translateY(-100%); }
+                            100% { transform: translateY(400%); }
+                        }
+                        @keyframes dot-pulse {
+                            0%, 100% { transform: scale(1); opacity: 0.5; }
+                            50% { transform: scale(1.5); opacity: 1; }
                         }
                     `}</style>
                 </div>
