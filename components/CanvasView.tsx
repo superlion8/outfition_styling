@@ -246,12 +246,13 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             const startX = -gridWidth / 2;
             const startY = -200;
 
-            const index = nds.length;
-            const col = index % cols;
-            const row = Math.floor(index / cols);
+            // Only count canvasItem nodes for grid positioning
+            const canvasItemCount = nds.filter(n => n.type === 'canvasItem').length;
+            const col = canvasItemCount % cols;
+            const row = Math.floor(canvasItemCount / cols);
 
             const newNode: Node<CanvasItemData> = {
-                id: `node-${Date.now()}-${index}`,
+                id: `node-${Date.now()}-${canvasItemCount}`,
                 type: 'canvasItem',
                 position: {
                     x: startX + col * (nodeWidth + gap),
