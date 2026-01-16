@@ -373,14 +373,14 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             if (n.position.y < minY) minY = n.position.y;
         });
 
-        // Whiteboard sizing
-        const whiteboardWidth = 180;
-        const whiteboardHeight = 220;
-        const whiteboardGapX = 20;
-        const whiteboardGapY = 20;
-        const startX = maxX + 60;
+        // Whiteboard sizing (wider, shorter)
+        const whiteboardWidth = 270;
+        const whiteboardHeight = 110;
+        const whiteboardGapX = 30;
+        const whiteboardGapY = 25;
+        const startX = maxX + 80;
         const startY = minY;
-        const maxPerColumn = 4;
+        const maxPerColumn = 5;
 
         // Step 1: Create empty whiteboards immediately
         const whiteboardIds: string[] = [];
@@ -405,6 +405,11 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         }
 
         setNodes((nds) => [...nds, ...emptyWhiteboards]);
+
+        // Zoom out and pan to show whiteboards
+        setTimeout(() => {
+            fitView({ padding: 0.2, duration: 500 });
+        }, 100);
 
         try {
             // Step 2: Add index overlays
@@ -462,13 +467,13 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 throw new Error('No outfits generated');
             }
 
-            // Step 6: Fill whiteboards with items
+            // Step 6: Fill whiteboards with items (horizontal layout)
             const imageNodes: Node[] = [];
-            const imageWidth = 80;
-            const imageHeight = 100;
-            const cols = 2;
+            const imageWidth = 55;
+            const imageHeight = 70;
+            const cols = 4; // 4 images per row for horizontal layout
             const gap = 5;
-            const offsetY = 25;
+            const offsetY = 22;
 
             result.outfits.forEach((outfit: { selectedIndices: number[]; reason: string }, outfitIdx: number) => {
                 const wbId = whiteboardIds[outfitIdx];
@@ -497,6 +502,11 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             });
 
             setNodes((nds) => [...nds, ...imageNodes]);
+
+            // Fit view to show all content
+            setTimeout(() => {
+                fitView({ padding: 0.15, duration: 400 });
+            }, 100);
 
             // Reset styling state
             setStylingStep('idle');
