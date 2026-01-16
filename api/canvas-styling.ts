@@ -86,11 +86,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 `
         });
 
-        // Add screenshot image
+        // Add screenshot image (auto-detect mime type)
+        const mimeMatch = screenshot.match(/^data:(image\/\w+);base64,/);
+        const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
         const base64Data = screenshot.replace(/^data:image\/\w+;base64,/, "");
         promptParts.push({
             inlineData: {
-                mimeType: 'image/png',
+                mimeType,
                 data: base64Data
             }
         });

@@ -433,35 +433,51 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 });
             }
 
-            // Step 3: Capture screenshot
+            // Step 3: Capture screenshot (lower quality for smaller payload)
             const html2canvas = (await import('html2canvas')).default;
             const canvas = await html2canvas(reactFlowWrapper.current, {
                 backgroundColor: '#1a1625',
-                scale: 2,
+                scale: 1, // Reduced scale for smaller file
             });
-            const screenshot = canvas.toDataURL('image/png');
+            const screenshot = canvas.toDataURL('image/jpeg', 0.7); // Use JPEG with 70% quality
 
             // Step 4: Remove overlays
             indexOverlays.forEach(el => el.remove());
 
-            // Step 5: Call API
-            const response = await fetch('/api/canvas-styling', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    screenshot,
-                    itemCount: stylingItems.length,
-                    outfitCount: stylingOutfitCount,
-                    userPrompt: stylingPrompt || undefined,
-                }),
-            });
+            // Step 5: Call API with retry for cold start
+            const callApi = async (retries = 2): Promise<any> => {
+                const response = await fetch('/api/canvas-styling', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        screenshot,
+                        itemCount: stylingItems.length,
+                        outfitCount: stylingOutfitCount,
+                        userPrompt: stylingPrompt || undefined,
+                    }),
+                });
 
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error || 'API request failed');
-            }
+                if (!response.ok) {
+                    const text = await response.text();
+                    let errorMsg = 'API request failed';
+                    try {
+                        const err = JSON.parse(text);
+                        errorMsg = err.error || errorMsg;
+                    } catch {
+                        // Response wasn't JSON (cold start timeout)
+                        if (retries > 0) {
+                            console.log(`Retrying API call... (${retries} left)`);
+                            return callApi(retries - 1);
+                        }
+                        errorMsg = 'Server timeout, please try again';
+                    }
+                    throw new Error(errorMsg);
+                }
 
-            const result = await response.json();
+                return response.json();
+            };
+
+            const result = await callApi();
 
             if (!result.outfits || result.outfits.length === 0) {
                 throw new Error('No outfits generated');
