@@ -137,40 +137,16 @@ interface ModelSelectorData {
 
 const ModelSelectorNode: React.FC<NodeProps<Node<ModelSelectorData>>> = ({ id, data, selected }) => {
     return (
-        <div
-            className={`
-                relative bg-card-dark rounded-xl overflow-hidden border-2 transition-all duration-200 shadow-2xl
-                ${selected ? 'border-primary ring-4 ring-primary/30' : 'border-border-dark'}
-            `}
-            style={{ width: 180, height: 320 }}
-        >
-            {/* Header Badge */}
-            <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full border border-white/10">
-                <User className="w-3 h-3 text-primary" />
-                <span className="text-white text-[10px] font-bold">Model Preview</span>
-            </div>
-
-            {/* Model Image */}
-            <div
-                className="w-full h-full bg-cover bg-center bg-no-repeat"
-                style={{ backgroundImage: `url(${data.modelImage})` }}
-            >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-
-                {/* Customize Button */}
-                <button
-                    className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 rounded-lg text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap transition-colors cursor-pointer"
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        window.dispatchEvent(new CustomEvent('openModelSelector', { detail: { nodeId: id } }));
-                    }}
-                >
-                    <Settings2 className="w-3.5 h-3.5" />
-                    Customize Avatar
-                </button>
-            </div>
-        </div>
+        <ModelPreviewCard
+            imageUrl={data.modelImage}
+            isSelected={selected}
+            showBadge={true}
+            showCustomizeButton={true}
+            onCustomize={() => {
+                window.dispatchEvent(new CustomEvent('openModelSelector', { detail: { nodeId: id } }));
+            }}
+            size="large"
+        />
     );
 };
 
