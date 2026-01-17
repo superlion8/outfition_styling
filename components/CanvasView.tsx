@@ -407,16 +407,61 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         setEdges((eds) => [...eds, edge]);
 
         try {
-            // Capture screenshot of the whiteboard
-            const wbElement = reactFlowWrapper.current.querySelector(`[data-id="${shootingWhiteboardId}"]`);
-            if (!wbElement) throw new Error('Whiteboard element not found');
-
+            // Capture screenshot of the whiteboard WITH all overlapping nodes
+            // ReactFlow nodes are siblings, so we need to capture the entire viewport area
             const html2canvas = (await import('html2canvas')).default;
-            const canvas = await html2canvas(wbElement as HTMLElement, {
-                backgroundColor: '#ffffff',
+            
+            // Get the ReactFlow viewport element that contains all nodes
+            const viewportElement = reactFlowWrapper.current.querySelector('.react-flow__viewport');
+            if (!viewportElement) throw new Error('Viewport element not found');
+            
+            // Get whiteboard bounds in flow coordinates
+            const wbWidth = typeof wb.style?.width === 'number' ? wb.style.width : 420;
+            const wbHeight = typeof wb.style?.height === 'number' ? wb.style.height : 300;
+            
+            // Get the current transform of the viewport
+            const transform = window.getComputedStyle(viewportElement).transform;
+            const matrix = new DOMMatrix(transform);
+            const scale = matrix.a; // Current zoom level
+            const translateX = matrix.e;
+            const translateY = matrix.f;
+            
+            // Calculate whiteboard position in screen coordinates
+            const wbScreenX = wb.position.x * scale + translateX;
+            const wbScreenY = wb.position.y * scale + translateY;
+            const wbScreenWidth = wbWidth * scale;
+            const wbScreenHeight = wbHeight * scale;
+            
+            // Capture the entire viewport
+            const fullCanvas = await html2canvas(viewportElement as HTMLElement, {
+                backgroundColor: null, // Transparent to see what's there
                 scale: 2,
+                logging: false,
             });
-            const outfitScreenshot = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Create a new canvas for the cropped whiteboard area
+            const croppedCanvas = document.createElement('canvas');
+            const padding = 10 * scale; // Small padding
+            croppedCanvas.width = (wbScreenWidth + padding * 2) * 2; // *2 for scale
+            croppedCanvas.height = (wbScreenHeight + padding * 2) * 2;
+            
+            const ctx = croppedCanvas.getContext('2d');
+            if (!ctx) throw new Error('Could not get canvas context');
+            
+            // Fill with white background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, croppedCanvas.width, croppedCanvas.height);
+            
+            // Draw the cropped portion from full canvas
+            // Source coordinates (from fullCanvas)
+            const srcX = (wbScreenX - padding) * 2;
+            const srcY = (wbScreenY - padding) * 2;
+            const srcW = (wbScreenWidth + padding * 2) * 2;
+            const srcH = (wbScreenHeight + padding * 2) * 2;
+            
+            ctx.drawImage(fullCanvas, srcX, srcY, srcW, srcH, 0, 0, croppedCanvas.width, croppedCanvas.height);
+            
+            const outfitScreenshot = croppedCanvas.toDataURL('image/jpeg', 0.9);
 
             // Debug logging
             console.log('📸 Screenshot captured:', {
