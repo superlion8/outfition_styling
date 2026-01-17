@@ -184,6 +184,13 @@ interface GenerationCardData {
 }
 
 const GenerationCardNode: React.FC<NodeProps<Node<GenerationCardData>>> = ({ data }) => {
+    const handleImageClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (data.status === 'success' && data.imageUrl) {
+            window.dispatchEvent(new CustomEvent('openImageLightbox', { detail: { imageUrl: data.imageUrl } }));
+        }
+    };
+
     return (
         <div className="bg-card-dark border border-white/20 rounded-xl shadow-2xl overflow-hidden w-[200px]">
             {data.status === 'loading' && (
@@ -193,7 +200,12 @@ const GenerationCardNode: React.FC<NodeProps<Node<GenerationCardData>>> = ({ dat
                 </div>
             )}
             {data.status === 'success' && data.imageUrl && (
-                <img src={data.imageUrl} alt="Generated Look" className="w-full aspect-[3/4] object-cover" />
+                <div className="relative group cursor-pointer" onClick={handleImageClick}>
+                    <img src={data.imageUrl} alt="Generated Look" className="w-full aspect-[3/4] object-cover" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                        <ZoomIn className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                </div>
             )}
             {data.status === 'error' && (
                 <div className="aspect-[3/4] flex flex-col items-center justify-center bg-red-900/20 p-4">
@@ -254,6 +266,17 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
     const [selectedShootModel, setSelectedShootModel] = useState<{ id: string; image: string } | null>(null);
     const [shootPrompt, setShootPrompt] = useState('');
 
+    // Lightbox state for image preview
+    const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
+    // Listen for image lightbox event
+    useEffect(() => {
+        const handleOpenLightbox = (e: CustomEvent<{ imageUrl: string }>) => {
+            setLightboxImage(e.detail.imageUrl);
+        };
+        window.addEventListener('openImageLightbox', handleOpenLightbox as EventListener);
+        return () => window.removeEventListener('openImageLightbox', handleOpenLightbox as EventListener);
+    }, []);
 
     // Listen for model selector open event from nodes
     useEffect(() => {
@@ -296,13 +319,13 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 },
             };
 
-            // Create dashed edge
+            // Create white dashed edge from whiteboard to model card
             const edge: Edge = {
                 id: `shoot-edge-${whiteboardId}`,
                 source: whiteboardId,
                 target: modelCardId,
-                style: { strokeDasharray: '8,4', stroke: '#f472b6', strokeWidth: 2 },
-                animated: true,
+                style: { strokeDasharray: '8,4', stroke: '#ffffff', strokeWidth: 2 },
+                animated: false,
             };
 
             // Update whiteboard to show hasModelCard and add modelCard node
@@ -394,13 +417,13 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             data: { status: 'loading' },
         };
 
-        // Edge from ModelCard to GenerationCard
+        // Edge from ModelCard to GenerationCard (white dashed)
         const edge: Edge = {
             id: `gen-edge-${shootingWhiteboardId}`,
             source: modelCardId,
             target: genCardId,
-            style: { strokeDasharray: '8,4', stroke: '#22c55e', strokeWidth: 2 },
-            animated: true,
+            style: { strokeDasharray: '8,4', stroke: '#ffffff', strokeWidth: 2 },
+            animated: false,
         };
 
         setNodes((nds) => [...nds, genCardNode]);
@@ -1422,6 +1445,27 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 onSelect={handleShootModelSelect}
                 title="Choose Your Model"
             />
+
+            {/* Image Lightbox Modal */}
+            {lightboxImage && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm cursor-pointer"
+                    onClick={() => setLightboxImage(null)}
+                >
+                    <button
+                        className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+                        onClick={() => setLightboxImage(null)}
+                    >
+                        <X className="w-6 h-6 text-white" />
+                    </button>
+                    <img
+                        src={lightboxImage}
+                        alt="Preview"
+                        className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
         </div>
     );
 };
