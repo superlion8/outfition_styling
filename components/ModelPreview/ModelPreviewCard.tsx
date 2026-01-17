@@ -10,6 +10,7 @@ export interface ModelPreviewCardProps {
     onCustomize?: () => void;
     onClick?: () => void;
     size?: 'small' | 'medium' | 'large';
+    height?: number; // Explicit height in px, width calculated from 9:16 ratio
 }
 
 export const ModelPreviewCard: React.FC<ModelPreviewCardProps> = ({
@@ -19,7 +20,8 @@ export const ModelPreviewCard: React.FC<ModelPreviewCardProps> = ({
     showCustomizeButton = true,
     onCustomize,
     onClick,
-    size = 'medium'
+    size = 'medium',
+    height
 }) => {
     const sizeClasses = {
         small: 'w-[70px]',
@@ -27,13 +29,18 @@ export const ModelPreviewCard: React.FC<ModelPreviewCardProps> = ({
         large: 'w-[140px]'
     };
 
+    // If height is provided, calculate width from 9:16 aspect ratio
+    const style: React.CSSProperties = height
+        ? { height, width: height * 9 / 16 }
+        : { aspectRatio: '9/16' };
+
     return (
         <div
-            className={`relative ${sizeClasses[size]} rounded-xl overflow-hidden transition-all cursor-pointer hover:scale-[1.02] border ${isSelected
+            className={`relative ${height ? '' : sizeClasses[size]} rounded-xl overflow-hidden transition-all cursor-pointer hover:scale-[1.02] border ${isSelected
                 ? 'border-amber-400/80 ring-2 ring-amber-400/30'
                 : 'border-white/10 hover:border-white/20'
                 }`}
-            style={{ aspectRatio: '9/16' }}
+            style={style}
             onClick={onClick}
         >
             {/* Model Image */}

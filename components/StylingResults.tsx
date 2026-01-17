@@ -4,6 +4,7 @@ import { GoogleGenAI } from "@google/genai";
 import { MOCK_IMAGES } from '../constants';
 import { WardrobeItem } from '../types';
 import modelsDataRaw from '../data/models.json';
+import { ModelPreviewCard } from './ModelPreview/ModelPreviewCard';
 
 // Type definition for the new model data
 interface Model {
@@ -134,14 +135,32 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
   onBack
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const whiteboardRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [previewImage, setPreviewImage] = useState<string | undefined>(undefined);
+  const [whiteboardHeight, setWhiteboardHeight] = useState<number>(0);
 
   // Model State
   const [currentModel, setCurrentModel] = useState<Model>(modelsData[0]);
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
+
+  // Sync Model Preview height with whiteboard
+  useEffect(() => {
+    const whiteboard = whiteboardRef.current;
+    if (!whiteboard) return;
+
+    const updateHeight = () => {
+      setWhiteboardHeight(whiteboard.offsetHeight);
+    };
+
+    updateHeight();
+    const resizeObserver = new ResizeObserver(updateHeight);
+    resizeObserver.observe(whiteboard);
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // Filter State
   const [ethnicityFilter, setEthnicityFilter] = useState('All');
@@ -341,39 +360,12 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8 items-stretch">
-
-        {/* Left Sidebar: Model Card - matches whiteboard height with 9:16 aspect ratio */}
-        <div className="shrink-0 sticky top-24 flex">
-          <div className="h-full bg-card-dark rounded-xl border border-border-dark p-2 flex flex-col gap-2 relative group overflow-hidden" style={{ aspectRatio: '9/16' }}>
-            {/* Header */}
-            <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-              <User className="w-3 h-3 text-primary" />
-              <span className="text-white text-xs font-bold tracking-wide">Model Preview</span>
-            </div>
-
-            {/* Image */}
-            <div
-              className="flex-1 rounded-lg bg-cover bg-center bg-no-repeat relative border border-white/5 transition-all duration-500"
-              style={{ backgroundImage: `url(${currentModel.image})` }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
-
-              <button
-                onClick={() => setIsModelSelectorOpen(true)}
-                className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg text-white text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap group/btn"
-              >
-                <Settings2 className="w-3.5 h-3.5 group-hover/btn:rotate-90 transition-transform duration-300" />
-                Customize Avatar
-              </button>
-            </div>
-          </div>
-        </div>
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
 
         {/* Right Content - Grid Table Only */}
         <div className="flex-1 min-w-0">
           <div
-            ref={scrollContainerRef}
+            ref={(el) => { scrollContainerRef.current = el; whiteboardRef.current = el; }}
             onMouseDown={handleMouseDown}
             onMouseLeave={handleMouseLeave}
             onMouseUp={handleMouseUp}
@@ -534,6 +526,18 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Model Preview Card - synced with whiteboard height */}
+        <div className="shrink-0 sticky top-24">
+          <ModelPreviewCard
+            imageUrl={currentModel.image}
+            isSelected={true}
+            showBadge={true}
+            showCustomizeButton={true}
+            onCustomize={() => setIsModelSelectorOpen(true)}
+            height={whiteboardHeight || 500}
+          />
         </div>
       </div>
 
