@@ -170,7 +170,6 @@ const ModelNode: React.FC<NodeProps<Node<ModelNodeData>>> = ({ id, data, selecte
             onCustomize={handleOpenPicker}
             size={cardHeight ? 'medium' : 'large'}
             height={cardHeight}
-            variant={cardHeight ? 'legacy' : 'default'}
         />
     );
 };
