@@ -24,6 +24,9 @@ import {
 import { WardrobeItem } from '../types';
 import modelsDataRaw from '../data/models.json';
 import { ModelPreviewCard } from './ModelPreview/ModelPreviewCard';
+import { ModelSelectorModal, Model } from './ModelPreview/ModelSelectorModal';
+
+const modelsData = modelsDataRaw as Model[];
 
 // Custom Node for Canvas Items
 interface CanvasItemData {
@@ -151,10 +154,9 @@ const ModelNode: React.FC<NodeProps<Node<ModelNodeData>>> = ({ id, data, selecte
         }
     };
 
-    const models = modelsDataRaw as { model_id: string; image: string }[];
     const modelImage = data.modelImage ||
-        models.find(m => m.model_id === data.modelId)?.image ||
-        models[0].image;
+        modelsData.find(m => m.model_id === data.modelId)?.image ||
+        modelsData[0]?.image || '';
 
     return (
         <ModelPreviewCard
@@ -211,16 +213,6 @@ interface CanvasViewProps {
     onBack: () => void;
 }
 
-// Model type for selector
-interface Model {
-    _id: string;
-    model_id: string;
-    image: string;
-    model_ethnicity: string;
-    model_gender: string;
-}
-const modelsData = modelsDataRaw as Model[];
-
 const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) => {
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -237,8 +229,6 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
     // Model selector modal state
     const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
     const [editingModelNodeId, setEditingModelNodeId] = useState<string | null>(null);
-    const [ethnicityFilter, setEthnicityFilter] = useState('All');
-    const [genderFilter, setGenderFilter] = useState('All');
 
     // Go Styling state
     // Go Styling state
@@ -326,7 +316,6 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         return () => window.removeEventListener('startShoot', handleStartShoot as EventListener);
     }, [nodes, setNodes, setEdges]);
 
-    // State for model picker modal in shoot workflow
     const [shootModelPickerOpen, setShootModelPickerOpen] = useState(false);
     const [editingModelCardId, setEditingModelCardId] = useState<string | null>(null);
 
@@ -476,23 +465,6 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         }
     }, [shootingWhiteboardId, selectedShootModel, shootPrompt, nodes, setNodes, setEdges]);
 
-    // Filter options
-    const ethnicityOptions = useMemo(() => {
-        const ethnicities = new Set(modelsData.map(m => m.model_ethnicity));
-        return ['All', ...Array.from(ethnicities)].sort();
-    }, []);
-    const genderOptions = useMemo(() => {
-        const genders = new Set(modelsData.map(m => m.model_gender));
-        return ['All', ...Array.from(genders)].sort();
-    }, []);
-    const filteredModels = useMemo(() => {
-        return modelsData.filter(model => {
-            const matchEthnicity = ethnicityFilter === 'All' || model.model_ethnicity === ethnicityFilter;
-            const matchGender = genderFilter === 'All' || model.model_gender === genderFilter;
-            return matchEthnicity && matchGender;
-        });
-    }, [ethnicityFilter, genderFilter]);
-
     // Handle model selection
     const handleSelectModel = useCallback((model: Model) => {
         if (editingModelNodeId) {
@@ -550,8 +522,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
     // Add model selector to canvas
     const handleAddModel = useCallback(() => {
-        const models = modelsDataRaw as { model_id: string; image: string }[];
-        const randomModel = models[Math.floor(Math.random() * models.length)];
+        const randomModel = modelsData[Math.floor(Math.random() * modelsData.length)];
         const newNode: Node<ModelNodeData> = {
             id: `model-${Date.now()}`,
             type: 'modelNode',
@@ -1278,68 +1249,6 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                     </div>
                 </div>
             )}
-
-            {/* Shoot Model Picker Modal */}
-            {shootModelPickerOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-card-dark border border-border-dark rounded-2xl w-full max-w-2xl p-6 shadow-2xl max-h-[80vh] flex flex-col">
-                        <div className="flex justify-between items-center mb-4">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xl">✨</span>
-                                <h3 className="text-lg font-bold text-white">Choose Your Model</h3>
-                            </div>
-                            <button
-                                onClick={() => { setShootModelPickerOpen(false); setEditingModelCardId(null); }}
-                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                            >
-                                <X className="w-5 h-5 text-text-muted" />
-                            </button>
-                        </div>
-
-                        {/* Filters */}
-                        <div className="flex gap-4 mb-4 p-3 bg-white/5 rounded-xl">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs text-text-muted">Ethnicity</span>
-                                <select
-                                    value={ethnicityFilter}
-                                    onChange={(e) => setEthnicityFilter(e.target.value)}
-                                    className="bg-card-dark border border-border-dark text-white rounded-lg px-2 py-1 text-xs"
-                                >
-                                    {ethnicityOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                </select>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs text-text-muted">Gender</span>
-                                <select
-                                    value={genderFilter}
-                                    onChange={(e) => setGenderFilter(e.target.value)}
-                                    className="bg-card-dark border border-border-dark text-white rounded-lg px-2 py-1 text-xs"
-                                >
-                                    {genderOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Model Grid - Matches reference design: 8 cols, no badges */}
-                        <div className="flex-1 overflow-y-auto">
-                            <div className="grid grid-cols-4 gap-4 px-2 pb-4">
-                                {filteredModels.map((model) => (
-                                    <ModelPreviewCard
-                                        key={model.model_id}
-                                        imageUrl={model.image}
-                                        isSelected={selectedShootModel?.id === model.model_id}
-                                        showBadge={false}
-                                        showCustomizeButton={false}
-                                        onClick={() => handleShootModelSelect(model)}
-                                        size="small"
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* Shoot Prompt Input Modal */}
             {shootStep === 'inputPrompt' && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -1390,176 +1299,25 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 </div>
             )}
 
-            {/* Styling Indicator - elegant fashion style */}
-            {stylingStep === 'generating' && (
-                <div
-                    className="absolute z-20 pointer-events-none"
-                    style={{
-                        left: '50%',
-                        top: '55%',
-                        transform: 'translate(-50%, -50%)',
-                    }}
-                >
-                    <div className="flex flex-col items-center">
-                        {/* Elegant line above */}
-                        <div
-                            className="w-16 h-px mb-6"
-                            style={{
-                                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)',
-                                animation: 'fade-in 1s ease-out',
-                            }}
-                        />
+            {/* Model Selector Modal (Unified) */}
+            <ModelSelectorModal
+                isOpen={isModelSelectorOpen}
+                onClose={() => { setIsModelSelectorOpen(false); setEditingModelNodeId(null); }}
+                models={modelsData}
+                selectedModelId={editingModelNodeId ? nodes.find(n => n.id === editingModelNodeId)?.data?.modelId as string : undefined}
+                onSelect={handleSelectModel}
+                title="Select Model"
+            />
 
-                        {/* Main text - elegant serif */}
-                        <div className="relative">
-                            <span
-                                style={{
-                                    fontFamily: 'Georgia, "Times New Roman", serif',
-                                    fontSize: '4rem',
-                                    fontWeight: 300,
-                                    fontStyle: 'italic',
-                                    letterSpacing: '0.15em',
-                                    color: 'rgba(255, 255, 255, 0.9)',
-                                    animation: 'elegant-fade 2s ease-in-out infinite',
-                                }}
-                            >
-                                Styling
-                            </span>
-                        </div>
-
-                        {/* Minimal dots */}
-                        <div className="flex gap-4 mt-5">
-                            {[0, 1, 2].map(i => (
-                                <div
-                                    key={i}
-                                    className="w-1.5 h-1.5 rounded-full bg-white/40"
-                                    style={{
-                                        animation: `elegant-dot 1.5s ease-in-out ${i * 0.3}s infinite`,
-                                    }}
-                                />
-                            ))}
-                        </div>
-
-                        {/* Elegant line below */}
-                        <div
-                            className="w-16 h-px mt-6"
-                            style={{
-                                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)',
-                                animation: 'fade-in 1s ease-out 0.3s backwards',
-                            }}
-                        />
-
-                        {/* Subtitle */}
-                        <p
-                            className="mt-6 tracking-[0.3em] uppercase"
-                            style={{
-                                fontFamily: 'system-ui, sans-serif',
-                                fontSize: '0.65rem',
-                                fontWeight: 500,
-                                color: 'rgba(255,255,255,0.4)',
-                                animation: 'fade-in 1.5s ease-out',
-                            }}
-                        >
-                            Curating your look
-                        </p>
-                    </div>
-
-                    <style>{`
-                        @keyframes elegant-fade {
-                            0%, 100% { opacity: 0.9; }
-                            50% { opacity: 0.6; }
-                        }
-                        @keyframes elegant-dot {
-                            0%, 100% { opacity: 0.3; transform: scale(1); }
-                            50% { opacity: 0.8; transform: scale(1.3); }
-                        }
-                        @keyframes fade-in {
-                            from { opacity: 0; transform: scaleX(0); }
-                            to { opacity: 1; transform: scaleX(1); }
-                        }
-                    `}</style>
-                </div>
-            )}
-
-            {/* Model Selector Modal */}
-            {isModelSelectorOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-card-dark border border-border-dark rounded-2xl w-full max-w-[95vw] xl:max-w-[1400px] p-6 shadow-2xl h-[85vh] flex flex-col">
-                        {/* Header */}
-                        <div className="flex justify-between items-center mb-4 shrink-0">
-                            <div className="flex items-center gap-3">
-                                <User className="w-5 h-5 text-primary" />
-                                <h3 className="text-lg font-bold text-white">Select Model</h3>
-                                <span className="text-xs text-text-muted bg-white/5 px-2 py-1 rounded-full">{filteredModels.length} models</span>
-                            </div>
-                            <button
-                                onClick={() => { setIsModelSelectorOpen(false); setEditingModelNodeId(null); }}
-                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                            >
-                                <X className="w-5 h-5 text-text-muted" />
-                            </button>
-                        </div>
-
-                        {/* Filters */}
-                        <div className="flex flex-wrap gap-4 mb-4 p-3 bg-white/5 rounded-xl border border-white/5 shrink-0">
-                            <div className="flex items-center gap-2 text-text-muted text-sm border-r border-white/10 pr-4">
-                                <Filter className="w-4 h-4" />
-                                <span>Filters:</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs text-text-muted uppercase font-bold">Ethnicity</span>
-                                <select
-                                    value={ethnicityFilter}
-                                    onChange={(e) => setEthnicityFilter(e.target.value)}
-                                    className="bg-card-dark border border-border-dark text-white rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary"
-                                >
-                                    {ethnicityOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                </select>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs text-text-muted uppercase font-bold">Gender</span>
-                                <select
-                                    value={genderFilter}
-                                    onChange={(e) => setGenderFilter(e.target.value)}
-                                    className="bg-card-dark border border-border-dark text-white rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary"
-                                >
-                                    {genderOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Grid */}
-                        <div className="flex-1 overflow-y-auto min-h-0">
-                            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-3">
-                                {filteredModels.map((model) => {
-                                    const currentNode = editingModelNodeId ? nodes.find(n => n.id === editingModelNodeId) : null;
-                                    const isSelected = currentNode?.data?.modelId === model.model_id;
-                                    return (
-                                        <div
-                                            key={model._id}
-                                            className={`relative aspect-[9/16] rounded-xl overflow-hidden group border-2 transition-all cursor-pointer ${isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-primary/50'}`}
-                                            onClick={() => handleSelectModel(model)}
-                                        >
-                                            <img loading="lazy" src={model.image} alt={model.model_id} className="w-full h-full object-cover" />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <div className="absolute bottom-0 left-0 right-0 p-2">
-                                                    <span className="text-white font-bold text-xs truncate block">{model.model_id}</span>
-                                                    <span className="text-white/60 text-[10px]">{model.model_ethnicity}</span>
-                                                </div>
-                                            </div>
-                                            {isSelected && (
-                                                <div className="absolute top-2 right-2 bg-primary text-black rounded-full p-1">
-                                                    <Check className="w-3 h-3" />
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Shoot Model Picker Modal (Unified) */}
+            <ModelSelectorModal
+                isOpen={shootModelPickerOpen}
+                onClose={() => { setShootModelPickerOpen(false); setEditingModelCardId(null); }}
+                models={modelsData}
+                selectedModelId={selectedShootModel?.id}
+                onSelect={handleShootModelSelect}
+                title="Choose Your Model"
+            />
         </div>
     );
 };
