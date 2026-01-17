@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { WardrobeItem } from '../types';
 import modelsDataRaw from '../data/models.json';
+import { ModelPreviewCard } from './ModelPreview/ModelPreviewCard';
 
 // Custom Node for Canvas Items
 interface CanvasItemData {
@@ -128,126 +129,37 @@ const ResizableImageNode: React.FC<NodeProps<Node<ResizableImageData>>> = ({ dat
     );
 };
 
-// Model Selector Node (for canvas)
-interface ModelSelectorData {
-    modelImage: string;
-    modelId: string;
+// Consolidated Model Node for all model previews on canvas
+interface ModelNodeData {
+    modelImage?: string;
+    modelId?: string;
+    whiteboardId?: string; // Present if originating from a shoot workflow
+    isShootWorkflow?: boolean;
     [key: string]: unknown;
 }
 
-const ModelSelectorNode: React.FC<NodeProps<Node<ModelSelectorData>>> = ({ id, data, selected }) => {
-    return (
-        <ModelPreviewCard
-            imageUrl={data.modelImage}
-            isSelected={selected}
-            showBadge={true}
-            showCustomizeButton={true}
-            onCustomize={() => {
-                window.dispatchEvent(new CustomEvent('openModelSelector', { detail: { nodeId: id } }));
-            }}
-            size="large"
-        />
-    );
-};
-
-// ========== Shared Model Preview Card Component ==========
-// Matches the design in StylingResults.tsx for consistency
-interface ModelPreviewCardProps {
-    imageUrl: string;
-    isSelected?: boolean;
-    showBadge?: boolean;
-    showCustomizeButton?: boolean;
-    onCustomize?: () => void;
-    onClick?: () => void;
-    size?: 'small' | 'medium' | 'large';
-}
-
-const ModelPreviewCard: React.FC<ModelPreviewCardProps> = ({
-    imageUrl,
-    isSelected = false,
-    showBadge = true,
-    showCustomizeButton = true,
-    onCustomize,
-    onClick,
-    size = 'medium'
-}) => {
-    const sizeClasses = {
-        small: 'w-[140px]',
-        medium: 'w-[200px]',
-        large: 'w-[280px]'
-    };
-
-    return (
-        <div
-            className={`relative ${sizeClasses[size]} rounded-xl overflow-hidden transition-all cursor-pointer hover:scale-[1.02] border ${isSelected
-                ? 'border-amber-400/80 ring-2 ring-amber-400/30'
-                : 'border-white/10 hover:border-white/20'
-                }`}
-            style={{ aspectRatio: '9/16' }}
-            onClick={onClick}
-        >
-            {/* Background Image - Absolute fill */}
-            <div
-                className="absolute inset-0 bg-cover bg-center bg-no-repeat relative"
-                style={{ backgroundImage: `url(${imageUrl})` }}
-            >
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
-                {/* Floating "Model Preview" badge */}
-                {showBadge && (
-                    <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/10">
-                        <svg className="w-3 h-3 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        <span className="text-white text-[10px] font-bold tracking-wide">Model Preview</span>
-                    </div>
-                )}
-
-                {/* Customize Avatar Button */}
-                {showCustomizeButton && onCustomize && (
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onCustomize(); }}
-                        className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg text-white text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap"
-                    >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <span>Customize Avatar</span>
-                    </button>
-                )}
-            </div>
-        </div>
-    );
-};
-
-// Model Card Node - Uses shared ModelPreviewCard
-interface ModelCardData {
-    whiteboardId: string;
-    selectedModelId?: string;
-    selectedModelImage?: string;
-    isPickerOpen?: boolean;
-    [key: string]: unknown;
-}
-
-const ModelCardNode: React.FC<NodeProps<Node<ModelCardData>>> = ({ id, data }) => {
+const ModelNode: React.FC<NodeProps<Node<ModelNodeData>>> = ({ id, data, selected }) => {
     const handleOpenPicker = () => {
-        window.dispatchEvent(new CustomEvent('openModelPicker', {
-            detail: { nodeId: id, whiteboardId: data.whiteboardId }
-        }));
+        if (data.isShootWorkflow) {
+            window.dispatchEvent(new CustomEvent('openModelPicker', {
+                detail: { nodeId: id, whiteboardId: data.whiteboardId }
+            }));
+        } else {
+            window.dispatchEvent(new CustomEvent('openModelSelector', {
+                detail: { nodeId: id }
+            }));
+        }
     };
 
-    const models = modelsDataRaw as Model[];
-    const selectedModel = data.selectedModelId
-        ? models.find(m => m.model_id === data.selectedModelId)
-        : models[0];
-    const modelImage = data.selectedModelImage || selectedModel?.image || models[0]?.image;
+    const models = modelsDataRaw as { model_id: string; image: string }[];
+    const modelImage = data.modelImage ||
+        models.find(m => m.model_id === data.modelId)?.image ||
+        models[0].image;
 
     return (
         <ModelPreviewCard
             imageUrl={modelImage}
-            isSelected={true}
+            isSelected={selected || data.isShootWorkflow}
             showBadge={true}
             showCustomizeButton={true}
             onCustomize={handleOpenPicker}
@@ -255,6 +167,7 @@ const ModelCardNode: React.FC<NodeProps<Node<ModelCardData>>> = ({ id, data }) =
         />
     );
 };
+
 
 // Generation Card Node (shows loading/result)
 interface GenerationCardData {
@@ -289,8 +202,7 @@ const nodeTypes = {
     canvasItem: CanvasItemNode,
     whiteboard: WhiteboardNode,
     resizableImage: ResizableImageNode,
-    modelSelector: ModelSelectorNode,
-    modelCard: ModelCardNode,
+    modelNode: ModelNode,
     generationCard: GenerationCardNode,
 };
 
@@ -372,14 +284,19 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
             // Create ModelCard node to the right of whiteboard
             const modelCardId = `modelcard-${whiteboardId}`;
-            const modelCardNode: Node = {
+            const modelCardNode: Node<ModelNodeData> = {
                 id: modelCardId,
-                type: 'modelCard',
+                type: 'modelNode',
                 position: {
                     x: wb.position.x + (typeof wb.style?.width === 'number' ? wb.style.width : 420) + 80,
                     y: wb.position.y,
                 },
-                data: { whiteboardId },
+                data: {
+                    whiteboardId,
+                    isShootWorkflow: true,
+                    modelImage: modelsData[0]?.image,
+                    modelId: modelsData[0]?.model_id
+                },
             };
 
             // Create dashed edge
@@ -431,7 +348,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         // Update the ModelCard node with selected model
         setNodes((nds) => nds.map(n =>
             n.id === editingModelCardId
-                ? { ...n, data: { ...n.data, selectedModelId: model.model_id, selectedModelImage: model.image } }
+                ? { ...n, data: { ...n.data, modelId: model.model_id, modelImage: model.image } }
                 : n
         ));
 
@@ -635,9 +552,9 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
     const handleAddModel = useCallback(() => {
         const models = modelsDataRaw as { model_id: string; image: string }[];
         const randomModel = models[Math.floor(Math.random() * models.length)];
-        const newNode: Node<ModelSelectorData> = {
+        const newNode: Node<ModelNodeData> = {
             id: `model-${Date.now()}`,
-            type: 'modelSelector',
+            type: 'modelNode',
             position: { x: 150, y: 0 },
             data: { modelImage: randomModel.image, modelId: randomModel.model_id },
         };
