@@ -463,10 +463,25 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             
             const outfitScreenshot = croppedCanvas.toDataURL('image/jpeg', 0.9);
 
+            // DEBUG: Add screenshot preview node to canvas
+            const debugShootScreenshotNode: Node = {
+                id: `debug-shoot-screenshot-${Date.now()}`,
+                type: 'resizableImage',
+                position: {
+                    x: wb.position.x,
+                    y: wb.position.y + wbHeight + 20,
+                },
+                data: { imageUrl: outfitScreenshot },
+                style: { width: wbWidth, height: wbHeight },
+            };
+            setNodes((nds) => [...nds, debugShootScreenshotNode]);
+            console.log('🔍 DEBUG: Shoot whiteboard screenshot added to canvas');
+
             // Debug logging
             console.log('📸 Screenshot captured:', {
-                width: canvas.width,
-                height: canvas.height,
+                whiteboardBounds: { x: wb.position.x, y: wb.position.y, w: wbWidth, h: wbHeight },
+                screenBounds: { x: wbScreenX, y: wbScreenY, w: wbScreenWidth, h: wbScreenHeight },
+                croppedSize: { w: croppedCanvas.width, h: croppedCanvas.height },
                 dataLength: outfitScreenshot.length,
                 modelImage: selectedShootModel.image,
                 userPrompt: shootPrompt
@@ -704,6 +719,20 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
             // Step 4: Remove overlays
             indexOverlays.forEach(el => el.remove());
+
+            // DEBUG: Add screenshot preview node to canvas
+            const debugScreenshotNode: Node = {
+                id: `debug-styling-screenshot-${Date.now()}`,
+                type: 'resizableImage',
+                position: {
+                    x: Math.min(...nodes.map(n => n.position.x)) - 350,
+                    y: Math.min(...nodes.map(n => n.position.y)),
+                },
+                data: { imageUrl: screenshot },
+                style: { width: 300, height: 200 },
+            };
+            setNodes((nds) => [...nds, debugScreenshotNode]);
+            console.log('🔍 DEBUG: Styling VLM screenshot added to canvas');
 
             // Step 5: Start Generation Process Immediately
             setStylingStep('generating');
