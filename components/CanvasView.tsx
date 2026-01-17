@@ -204,8 +204,8 @@ const ModelPreviewCard: React.FC<ModelPreviewCardProps> = ({
     return (
         <div
             className={`relative ${sizeClasses[size]} rounded-xl overflow-hidden transition-all cursor-pointer hover:scale-[1.02] border ${isSelected
-                    ? 'border-amber-400/80 ring-2 ring-amber-400/30'
-                    : 'border-white/10 hover:border-white/20'
+                ? 'border-amber-400/80 ring-2 ring-amber-400/30'
+                : 'border-white/10 hover:border-white/20'
                 }`}
             onClick={onClick}
         >
@@ -1426,18 +1426,18 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                             </div>
                         </div>
 
-                        {/* Model Grid - Uses shared ModelPreviewCard (same config as canvas) */}
+                        {/* Model Grid - Matches reference design: 8 cols, no badges */}
                         <div className="flex-1 overflow-y-auto">
-                            <div className="grid grid-cols-4 gap-4">
+                            <div className="grid grid-cols-8 gap-2">
                                 {filteredModels.map((model) => (
                                     <ModelPreviewCard
                                         key={model.model_id}
                                         imageUrl={model.image}
                                         isSelected={selectedShootModel?.id === model.model_id}
-                                        showBadge={true}
+                                        showBadge={false}
                                         showCustomizeButton={false}
                                         onClick={() => handleShootModelSelect(model)}
-                                        size="medium"
+                                        size="small"
                                     />
                                 ))}
                             </div>
