@@ -67,13 +67,8 @@ interface WhiteboardData {
 const WhiteboardNode: React.FC<NodeProps<Node<WhiteboardData>>> = ({ id, data, selected }) => {
     const handleShootClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (data.hasModelCard) {
-            // Already has model card, trigger confirm
-            window.dispatchEvent(new CustomEvent('confirmShoot', { detail: { whiteboardId: id } }));
-        } else {
-            // Start shoot workflow
-            window.dispatchEvent(new CustomEvent('startShoot', { detail: { whiteboardId: id } }));
-        }
+        // Start shoot workflow - creates model card
+        window.dispatchEvent(new CustomEvent('startShoot', { detail: { whiteboardId: id } }));
     };
 
     return (
@@ -84,33 +79,28 @@ const WhiteboardNode: React.FC<NodeProps<Node<WhiteboardData>>> = ({ id, data, s
             `}
             style={{ width: '100%', height: '100%' }}
         >
-            {/* Connection handle on the right side */}
+            {/* Connection handle on the right side - smaller */}
             <Handle
                 type="source"
                 position={Position.Right}
-                className="!w-3 !h-3 !bg-white !border-2 !border-white/50"
-                style={{ right: -6 }}
+                className="!w-2 !h-2 !bg-white !border !border-white/50"
+                style={{ right: -4 }}
             />
             <div className="absolute top-2 left-3 text-gray-400 text-xs font-medium">
                 {data.label || 'Whiteboard'}
             </div>
-            {/* Shoot / Confirm Shoot Button */}
-            <button
-                onClick={handleShootClick}
-                className="absolute top-2 right-2 group"
-            >
-                {data.hasModelCard ? (
-                    <div className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-[10px] font-bold tracking-wider uppercase rounded-full shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center gap-1.5">
-                        <span>Confirm Shoot</span>
-                        <span>→</span>
-                    </div>
-                ) : (
+            {/* Shoot Button - only show if no model card yet */}
+            {!data.hasModelCard && (
+                <button
+                    onClick={handleShootClick}
+                    className="absolute top-2 right-2 group"
+                >
                     <div className="px-3 py-1.5 bg-black/80 hover:bg-black text-white text-[10px] font-medium tracking-wider uppercase rounded-full border border-white/20 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
                         <span>Shoot</span>
                     </div>
-                )}
-            </button>
+                </button>
+            )}
         </div>
     );
 };
@@ -164,6 +154,15 @@ const ModelNode: React.FC<NodeProps<Node<ModelNodeData>>> = ({ id, data, selecte
         }
     };
 
+    const handleConfirmShoot = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (data.whiteboardId) {
+            window.dispatchEvent(new CustomEvent('confirmShoot', {
+                detail: { whiteboardId: data.whiteboardId, modelNodeId: id }
+            }));
+        }
+    };
+
     const modelImage = data.modelImage ||
         modelsData.find(m => m.model_id === data.modelId)?.image ||
         modelsData[0]?.image || '';
@@ -172,13 +171,27 @@ const ModelNode: React.FC<NodeProps<Node<ModelNodeData>>> = ({ id, data, selecte
 
     return (
         <div className="relative">
-            {/* Left handle - receives connection from whiteboard */}
+            {/* Left handle - receives connection from whiteboard - smaller */}
             <Handle
                 type="target"
                 position={Position.Left}
-                className="!w-3 !h-3 !bg-white !border-2 !border-white/50"
-                style={{ left: -6 }}
+                className="!w-2 !h-2 !bg-white !border !border-white/50"
+                style={{ left: -4 }}
             />
+
+            {/* Confirm Shoot button on Model Card */}
+            {data.isShootWorkflow && (
+                <button
+                    onClick={handleConfirmShoot}
+                    className="absolute -top-3 left-1/2 -translate-x-1/2 z-10"
+                >
+                    <div className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-[10px] font-bold tracking-wider uppercase rounded-full shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center gap-1.5 whitespace-nowrap">
+                        <span>Generate</span>
+                        <span>→</span>
+                    </div>
+                </button>
+            )}
+
             <ModelPreviewCard
                 imageUrl={modelImage}
                 isSelected={selected}
@@ -188,12 +201,12 @@ const ModelNode: React.FC<NodeProps<Node<ModelNodeData>>> = ({ id, data, selecte
                 size={cardHeight ? 'medium' : 'large'}
                 height={cardHeight}
             />
-            {/* Right handle - connects to generation card */}
+            {/* Right handle - connects to generation card - smaller */}
             <Handle
                 type="source"
                 position={Position.Right}
-                className="!w-3 !h-3 !bg-white !border-2 !border-white/50"
-                style={{ right: -6 }}
+                className="!w-2 !h-2 !bg-white !border !border-white/50"
+                style={{ right: -4 }}
             />
         </div>
     );
@@ -218,12 +231,12 @@ const GenerationCardNode: React.FC<NodeProps<Node<GenerationCardData>>> = ({ dat
 
     return (
         <div className="bg-card-dark border border-white/20 rounded-xl shadow-2xl overflow-hidden w-[200px] relative">
-            {/* Left handle - receives connection from model card */}
+            {/* Left handle - receives connection from model card - smaller */}
             <Handle
                 type="target"
                 position={Position.Left}
-                className="!w-3 !h-3 !bg-white !border-2 !border-white/50"
-                style={{ left: -6 }}
+                className="!w-2 !h-2 !bg-white !border !border-white/50"
+                style={{ left: -4 }}
             />
             {data.status === 'loading' && (
                 <div className="aspect-[3/4] flex flex-col items-center justify-center bg-black/20">
