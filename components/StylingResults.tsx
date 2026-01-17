@@ -344,27 +344,29 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
       <div className="flex flex-col lg:flex-row gap-8 items-stretch">
 
         {/* Left Sidebar: Model Card - matches whiteboard height with 9:16 aspect ratio */}
-        <div className="shrink-0 sticky top-24 bg-card-dark rounded-xl border border-border-dark p-2 flex flex-col gap-2 relative group overflow-hidden" style={{ aspectRatio: '9/16' }}>
-          {/* Header */}
-          <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-            <User className="w-3 h-3 text-primary" />
-            <span className="text-white text-xs font-bold tracking-wide">Model Preview</span>
-          </div>
+        <div className="shrink-0 sticky top-24 flex">
+          <div className="h-full bg-card-dark rounded-xl border border-border-dark p-2 flex flex-col gap-2 relative group overflow-hidden" style={{ aspectRatio: '9/16' }}>
+            {/* Header */}
+            <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
+              <User className="w-3 h-3 text-primary" />
+              <span className="text-white text-xs font-bold tracking-wide">Model Preview</span>
+            </div>
 
-          {/* Image */}
-          <div
-            className="flex-1 rounded-lg bg-cover bg-center bg-no-repeat relative border border-white/5 transition-all duration-500"
-            style={{ backgroundImage: `url(${currentModel.image})` }} // Updated field
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
-
-            <button
-              onClick={() => setIsModelSelectorOpen(true)}
-              className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg text-white text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap group/btn"
+            {/* Image */}
+            <div
+              className="flex-1 rounded-lg bg-cover bg-center bg-no-repeat relative border border-white/5 transition-all duration-500"
+              style={{ backgroundImage: `url(${currentModel.image})` }}
             >
-              <Settings2 className="w-3.5 h-3.5 group-hover/btn:rotate-90 transition-transform duration-300" />
-              Customize Avatar
-            </button>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
+
+              <button
+                onClick={() => setIsModelSelectorOpen(true)}
+                className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg text-white text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap group/btn"
+              >
+                <Settings2 className="w-3.5 h-3.5 group-hover/btn:rotate-90 transition-transform duration-300" />
+                Customize Avatar
+              </button>
+            </div>
           </div>
         </div>
 
