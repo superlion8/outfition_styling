@@ -274,7 +274,7 @@ const ModelCardNode: React.FC<NodeProps<Node<ModelCardData>>> = ({ id, data }) =
             showBadge={true}
             showCustomizeButton={true}
             onCustomize={handleOpenPicker}
-            size="medium"
+            size="large"
         />
     );
 };
