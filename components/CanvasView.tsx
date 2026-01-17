@@ -138,6 +138,7 @@ interface ModelNodeData {
     modelId?: string;
     whiteboardId?: string; // Present if originating from a shoot workflow
     isShootWorkflow?: boolean;
+    cardHeight?: number;
     [key: string]: unknown;
 }
 
@@ -158,14 +159,18 @@ const ModelNode: React.FC<NodeProps<Node<ModelNodeData>>> = ({ id, data, selecte
         modelsData.find(m => m.model_id === data.modelId)?.image ||
         modelsData[0]?.image || '';
 
+    const cardHeight = typeof data.cardHeight === 'number' ? data.cardHeight : undefined;
+
     return (
         <ModelPreviewCard
             imageUrl={modelImage}
-            isSelected={selected || data.isShootWorkflow}
+            isSelected={selected}
             showBadge={true}
             showCustomizeButton={true}
             onCustomize={handleOpenPicker}
-            size="large"
+            size={cardHeight ? 'medium' : 'large'}
+            height={cardHeight}
+            variant={cardHeight ? 'full' : 'default'}
         />
     );
 };
@@ -272,6 +277,8 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             const wb = nodes.find(n => n.id === whiteboardId);
             if (!wb) return;
 
+            const whiteboardHeight = typeof wb.style?.height === 'number' ? wb.style.height : 300;
+
             // Create ModelCard node to the right of whiteboard
             const modelCardId = `modelcard-${whiteboardId}`;
             const modelCardNode: Node<ModelNodeData> = {
@@ -285,7 +292,8 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                     whiteboardId,
                     isShootWorkflow: true,
                     modelImage: modelsData[0]?.image,
-                    modelId: modelsData[0]?.model_id
+                    modelId: modelsData[0]?.model_id,
+                    cardHeight: whiteboardHeight
                 },
             };
 
