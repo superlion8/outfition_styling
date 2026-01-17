@@ -510,42 +510,16 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
           </div>
         </div>
 
-        {/* Model Preview Card - 参考图2样式 */}
+        {/* Model Preview Card - 高度650px，9:16比例 */}
         <div className="hidden lg:block sticky top-24">
-          <div 
-            className="bg-card-dark rounded-2xl border border-border-dark overflow-hidden relative flex flex-col"
-            style={{ height: 650, width: 650 * 9 / 16 }}
-          >
-            {/* Model Image */}
-            <div className="flex-1 relative">
-              {currentModel.image ? (
-                <img
-                  src={currentModel.image}
-                  alt="Model"
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-neutral-900 flex items-center justify-center">
-                  <span className="text-white/20 text-xs text-center px-4">No Image</span>
-                </div>
-              )}
-
-              {/* Badge - 左上角 */}
-              <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                <User className="w-4 h-4 text-amber-400" />
-                <span className="text-white text-sm font-bold">Model Preview</span>
-              </div>
-            </div>
-
-            {/* Customize Button - 底部栏 */}
-            <button
-              onClick={() => setIsModelSelectorOpen(true)}
-              className="w-full py-4 bg-black/40 backdrop-blur-md text-white font-bold transition-all flex items-center justify-center gap-2 hover:bg-black/60"
-            >
-              <Settings2 className="w-5 h-5" />
-              <span>Customize Avatar</span>
-            </button>
-          </div>
+          <ModelPreviewCard
+            imageUrl={currentModel.image}
+            isSelected={true}
+            showBadge={true}
+            showCustomizeButton={true}
+            onCustomize={() => setIsModelSelectorOpen(true)}
+            height={650}
+          />
         </div>
       </div>
 
