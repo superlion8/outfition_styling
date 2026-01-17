@@ -743,20 +743,6 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             // Step 4: Remove overlays
             indexOverlays.forEach(el => el.remove());
 
-            // DEBUG: Add screenshot preview node to canvas
-            const debugScreenshotNode: Node = {
-                id: `debug-styling-screenshot-${Date.now()}`,
-                type: 'resizableImage',
-                position: {
-                    x: Math.min(...nodes.map(n => n.position.x)) - 350,
-                    y: Math.min(...nodes.map(n => n.position.y)),
-                },
-                data: { imageUrl: screenshot },
-                style: { width: 300, height: 200 },
-            };
-            setNodes((nds) => [...nds, debugScreenshotNode]);
-            console.log('🔍 DEBUG: Styling VLM screenshot added to canvas');
-
             // Step 5: Start Generation Process Immediately
             setStylingStep('generating');
 
@@ -769,7 +755,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             const minY = Math.min(...nodes.map(n => n.position.y)) || 0;
             const maxPerColumn = 4;
 
-            // Clean up old styling nodes
+            // Clean up old styling nodes (but keep debug screenshots)
             const cleanNodes = nodes.filter(n => !n.id.startsWith('styling-'));
 
             // Generate new whiteboards
@@ -795,8 +781,21 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 });
             }
 
-            // Add whiteboards to canvas immediately
-            setNodes([...cleanNodes, ...newNodes]);
+            // DEBUG: Create screenshot preview node to show VLM input
+            const debugScreenshotNode: Node = {
+                id: `debug-styling-screenshot-${Date.now()}`,
+                type: 'resizableImage',
+                position: {
+                    x: Math.min(...nodes.map(n => n.position.x)) - 350,
+                    y: minY,
+                },
+                data: { imageUrl: screenshot },
+                style: { width: 300, height: 200 },
+            };
+            console.log('🔍 DEBUG: Styling VLM screenshot added to canvas');
+
+            // Add whiteboards AND debug screenshot to canvas
+            setNodes([...cleanNodes, ...newNodes, debugScreenshotNode]);
 
             // Zoom to show new workspace
             setTimeout(() => {
