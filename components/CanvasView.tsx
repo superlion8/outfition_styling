@@ -470,11 +470,15 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             const wbElement = reactFlowWrapper.current.querySelector(`[data-id="${shootingWhiteboardId}"]`);
             if (!wbElement) throw new Error('Whiteboard element not found');
 
+            // Scroll the whiteboard into view and wait for it to be visible
+            wbElement.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'center' });
+            await new Promise(resolve => setTimeout(resolve, 300)); // Wait for scroll and render
+
             // Get the React Flow viewport element
             const viewportElement = reactFlowWrapper.current.querySelector('.react-flow__viewport');
             if (!viewportElement) throw new Error('Viewport element not found');
 
-            // Get whiteboard's bounding rect in screen coordinates
+            // Get whiteboard's bounding rect in screen coordinates (after scroll)
             const wbRect = wbElement.getBoundingClientRect();
             const viewportRect = (viewportElement as HTMLElement).getBoundingClientRect();
 
@@ -508,8 +512,8 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
             // Draw the cropped portion from full canvas
             // Source coordinates (from fullCanvas, scaled by 2)
-            const srcX = (relativeX - padding) * 2;
-            const srcY = (relativeY - padding) * 2;
+            const srcX = Math.max(0, (relativeX - padding) * 2);
+            const srcY = Math.max(0, (relativeY - padding) * 2);
             const srcW = (wbRect.width + padding * 2) * 2;
             const srcH = (wbRect.height + padding * 2) * 2;
 
@@ -517,16 +521,17 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
             const outfitScreenshot = croppedCanvas.toDataURL('image/jpeg', 0.9);
 
-            // DEBUG: Add screenshot preview node to canvas
+            // DEBUG: Add screenshot preview node to canvas - position to the right of generation card
+            const genCardWidth = 200; // GenerationCardNode width
             const debugShootScreenshotNode: Node = {
                 id: `debug-shoot-screenshot-${Date.now()}`,
                 type: 'resizableImage',
                 position: {
-                    x: wb.position.x,
-                    y: wb.position.y + wbHeight + 20,
+                    x: modelCard.position.x + genCardWidth + 350, // Right of model card + gen card space
+                    y: modelCard.position.y,
                 },
                 data: { imageUrl: outfitScreenshot },
-                style: { width: wbWidth, height: wbHeight },
+                style: { width: wbWidth * 0.6, height: wbHeight * 0.6 },
             };
             setNodes((nds) => [...nds, debugShootScreenshotNode]);
             console.log('🔍 DEBUG: Shoot whiteboard screenshot added to canvas');
