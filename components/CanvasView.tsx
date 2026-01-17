@@ -13,6 +13,8 @@ import {
     Edge,
     NodeProps,
     NodeResizer,
+    Handle,
+    Position,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import imageCompression from 'browser-image-compression';
@@ -82,6 +84,13 @@ const WhiteboardNode: React.FC<NodeProps<Node<WhiteboardData>>> = ({ id, data, s
             `}
             style={{ width: '100%', height: '100%' }}
         >
+            {/* Connection handle on the right side */}
+            <Handle
+                type="source"
+                position={Position.Right}
+                className="!w-3 !h-3 !bg-white !border-2 !border-white/50"
+                style={{ right: -6 }}
+            />
             <div className="absolute top-2 left-3 text-gray-400 text-xs font-medium">
                 {data.label || 'Whiteboard'}
             </div>
@@ -162,15 +171,31 @@ const ModelNode: React.FC<NodeProps<Node<ModelNodeData>>> = ({ id, data, selecte
     const cardHeight = typeof data.cardHeight === 'number' ? data.cardHeight : undefined;
 
     return (
-        <ModelPreviewCard
-            imageUrl={modelImage}
-            isSelected={selected}
-            showBadge={true}
-            showCustomizeButton={true}
-            onCustomize={handleOpenPicker}
-            size={cardHeight ? 'medium' : 'large'}
-            height={cardHeight}
-        />
+        <div className="relative">
+            {/* Left handle - receives connection from whiteboard */}
+            <Handle
+                type="target"
+                position={Position.Left}
+                className="!w-3 !h-3 !bg-white !border-2 !border-white/50"
+                style={{ left: -6 }}
+            />
+            <ModelPreviewCard
+                imageUrl={modelImage}
+                isSelected={selected}
+                showBadge={true}
+                showCustomizeButton={true}
+                onCustomize={handleOpenPicker}
+                size={cardHeight ? 'medium' : 'large'}
+                height={cardHeight}
+            />
+            {/* Right handle - connects to generation card */}
+            <Handle
+                type="source"
+                position={Position.Right}
+                className="!w-3 !h-3 !bg-white !border-2 !border-white/50"
+                style={{ right: -6 }}
+            />
+        </div>
     );
 };
 
@@ -192,7 +217,14 @@ const GenerationCardNode: React.FC<NodeProps<Node<GenerationCardData>>> = ({ dat
     };
 
     return (
-        <div className="bg-card-dark border border-white/20 rounded-xl shadow-2xl overflow-hidden w-[200px]">
+        <div className="bg-card-dark border border-white/20 rounded-xl shadow-2xl overflow-hidden w-[200px] relative">
+            {/* Left handle - receives connection from model card */}
+            <Handle
+                type="target"
+                position={Position.Left}
+                className="!w-3 !h-3 !bg-white !border-2 !border-white/50"
+                style={{ left: -6 }}
+            />
             {data.status === 'loading' && (
                 <div className="aspect-[3/4] flex flex-col items-center justify-center bg-black/20">
                     <div className="w-8 h-8 border-2 border-white/20 border-t-pink-500 rounded-full animate-spin" />
