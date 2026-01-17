@@ -1429,7 +1429,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
                         {/* Model Grid - Matches reference design: 8 cols, no badges */}
                         <div className="flex-1 overflow-y-auto">
-                            <div className="grid grid-cols-8 gap-2">
+                            <div className="grid grid-cols-4 gap-4 px-2 pb-4">
                                 {filteredModels.map((model) => (
                                     <ModelPreviewCard
                                         key={model.model_id}
