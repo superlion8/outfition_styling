@@ -521,7 +521,7 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
             showCustomizeButton={true}
             onCustomize={() => setIsModelSelectorOpen(true)}
             height={panelHeight}
-            variant="full"
+            variant="legacy"
           />
         </div>
       </div>
