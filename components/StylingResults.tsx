@@ -139,6 +139,7 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [previewImage, setPreviewImage] = useState<string | undefined>(undefined);
+  const panelHeight = 650;
 
   // Model State
   const [currentModel, setCurrentModel] = useState<Model>(modelsData[0]);
@@ -352,7 +353,8 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
             onMouseLeave={handleMouseLeave}
             onMouseUp={handleMouseUp}
             onMouseMove={handleMouseMove}
-            className="bg-card-dark rounded-xl border border-border-dark p-4 md:p-8 overflow-x-auto relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing min-h-[650px]"
+            className="bg-card-dark rounded-xl border border-border-dark p-4 md:p-8 overflow-x-auto overflow-y-auto relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing"
+            style={{ height: panelHeight }}
           >
             <div className="min-w-full">
               {/* Header Row */}
@@ -514,11 +516,12 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
         <div className="hidden lg:block sticky top-24">
           <ModelPreviewCard
             imageUrl={currentModel.image}
-            isSelected={true}
+            isSelected={false}
             showBadge={true}
             showCustomizeButton={true}
             onCustomize={() => setIsModelSelectorOpen(true)}
-            height={650}
+            height={panelHeight}
+            variant="full"
           />
         </div>
       </div>
