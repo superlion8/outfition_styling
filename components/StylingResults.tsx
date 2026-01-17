@@ -135,32 +135,14 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
   onBack
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const whiteboardRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [previewImage, setPreviewImage] = useState<string | undefined>(undefined);
-  const [whiteboardHeight, setWhiteboardHeight] = useState<number>(0);
 
   // Model State
   const [currentModel, setCurrentModel] = useState<Model>(modelsData[0]);
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
-
-  // Sync Model Preview height with whiteboard
-  useEffect(() => {
-    const whiteboard = whiteboardRef.current;
-    if (!whiteboard) return;
-
-    const updateHeight = () => {
-      setWhiteboardHeight(whiteboard.offsetHeight);
-    };
-
-    updateHeight();
-    const resizeObserver = new ResizeObserver(updateHeight);
-    resizeObserver.observe(whiteboard);
-
-    return () => resizeObserver.disconnect();
-  }, []);
 
   // Filter State
   const [ethnicityFilter, setEthnicityFilter] = useState('All');
@@ -360,17 +342,17 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8">
 
-        {/* Right Content - Grid Table Only */}
-        <div className="flex-1 min-w-0">
+        {/* Left Content - Grid Table */}
+        <div className="min-w-0">
           <div
-            ref={(el) => { scrollContainerRef.current = el; whiteboardRef.current = el; }}
+            ref={scrollContainerRef}
             onMouseDown={handleMouseDown}
             onMouseLeave={handleMouseLeave}
             onMouseUp={handleMouseUp}
             onMouseMove={handleMouseMove}
-            className="bg-card-dark rounded-xl border border-border-dark p-4 md:p-8 overflow-x-auto relative mb-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing"
+            className="bg-card-dark rounded-xl border border-border-dark p-4 md:p-8 overflow-x-auto relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing h-full"
           >
             <div className="min-w-full">
               {/* Header Row */}
@@ -528,16 +510,43 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
           </div>
         </div>
 
-        {/* Model Preview Card - synced with whiteboard height */}
-        <div className="shrink-0 sticky top-24">
-          <ModelPreviewCard
-            imageUrl={currentModel.image}
-            isSelected={true}
-            showBadge={true}
-            showCustomizeButton={true}
-            onCustomize={() => setIsModelSelectorOpen(true)}
-            height={whiteboardHeight || 500}
-          />
+        {/* Model Preview Card - 使用 grid 自动等高 */}
+        <div className="hidden lg:block sticky top-24 h-full">
+          <div 
+            className="h-full bg-card-dark rounded-xl border border-amber-400/80 ring-2 ring-amber-400/30 overflow-hidden relative"
+            style={{ aspectRatio: '9/16' }}
+          >
+            {/* Model Image */}
+            {currentModel.image ? (
+              <img
+                src={currentModel.image}
+                alt="Model"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-neutral-900 flex items-center justify-center">
+                <span className="text-white/20 text-xs text-center px-4">No Image</span>
+              </div>
+            )}
+
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+
+            {/* Badge */}
+            <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/10">
+              <User className="w-3 h-3 text-amber-400" />
+              <span className="text-white text-[10px] font-bold tracking-wide">Model Preview</span>
+            </div>
+
+            {/* Customize Button */}
+            <button
+              onClick={() => setIsModelSelectorOpen(true)}
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg text-white text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap"
+            >
+              <Settings2 className="w-3.5 h-3.5" />
+              <span>Customize Avatar</span>
+            </button>
+          </div>
         </div>
       </div>
 
