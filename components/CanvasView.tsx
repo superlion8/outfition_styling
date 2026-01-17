@@ -798,13 +798,40 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 });
             }
 
-            // Step 3: Capture screenshot (lower quality for smaller payload)
+            // Step 3: Capture screenshot - zoom in on selected items only
             const html2canvas = (await import('html2canvas')).default;
-            const canvas = await html2canvas(reactFlowWrapper.current, {
-                backgroundColor: '#1a1625',
-                scale: 1, // Reduced scale for smaller file
+
+            // Calculate bounding box of selected items to crop just that region
+            const selectedElements = stylingItems.map(item =>
+                reactFlowWrapper.current?.querySelector(`[data-id="${item.nodeId}"]`)
+            ).filter(Boolean) as HTMLElement[];
+
+            if (selectedElements.length === 0) throw new Error('No selected elements found');
+
+            // Get bounding box in screen coordinates
+            let cropMinX = Infinity, cropMinY = Infinity, cropMaxX = -Infinity, cropMaxY = -Infinity;
+            selectedElements.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                cropMinX = Math.min(cropMinX, rect.left);
+                cropMinY = Math.min(cropMinY, rect.top);
+                cropMaxX = Math.max(cropMaxX, rect.right);
+                cropMaxY = Math.max(cropMaxY, rect.bottom);
             });
-            const screenshot = canvas.toDataURL('image/jpeg', 0.7); // Use JPEG with 70% quality
+
+            // Add padding around the bounding box
+            const padding = 40;
+            const wrapperRect = reactFlowWrapper.current.getBoundingClientRect();
+
+            // Capture with cropping to just the selected area
+            const fullCanvas = await html2canvas(reactFlowWrapper.current, {
+                backgroundColor: '#1a1625',
+                scale: 2, // Higher scale for better quality
+                x: Math.max(0, cropMinX - wrapperRect.left - padding),
+                y: Math.max(0, cropMinY - wrapperRect.top - padding),
+                width: cropMaxX - cropMinX + padding * 2,
+                height: cropMaxY - cropMinY + padding * 2,
+            });
+            const screenshot = fullCanvas.toDataURL('image/jpeg', 0.85); // Higher quality
 
             // Step 4: Remove overlays
             indexOverlays.forEach(el => el.remove());
