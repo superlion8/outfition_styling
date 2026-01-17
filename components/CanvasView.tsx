@@ -433,57 +433,57 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             // Capture screenshot of the whiteboard WITH all overlapping nodes
             // ReactFlow nodes are siblings, so we need to capture the entire viewport area
             const html2canvas = (await import('html2canvas')).default;
-            
+
             // Get the ReactFlow viewport element that contains all nodes
             const viewportElement = reactFlowWrapper.current.querySelector('.react-flow__viewport');
             if (!viewportElement) throw new Error('Viewport element not found');
-            
+
             // Get whiteboard bounds in flow coordinates
             const wbWidth = typeof wb.style?.width === 'number' ? wb.style.width : 420;
             const wbHeight = typeof wb.style?.height === 'number' ? wb.style.height : 300;
-            
+
             // Get the current transform of the viewport
             const transform = window.getComputedStyle(viewportElement).transform;
             const matrix = new DOMMatrix(transform);
             const scale = matrix.a; // Current zoom level
             const translateX = matrix.e;
             const translateY = matrix.f;
-            
+
             // Calculate whiteboard position in screen coordinates
             const wbScreenX = wb.position.x * scale + translateX;
             const wbScreenY = wb.position.y * scale + translateY;
             const wbScreenWidth = wbWidth * scale;
             const wbScreenHeight = wbHeight * scale;
-            
+
             // Capture the entire viewport
             const fullCanvas = await html2canvas(viewportElement as HTMLElement, {
                 backgroundColor: null, // Transparent to see what's there
                 scale: 2,
                 logging: false,
             });
-            
+
             // Create a new canvas for the cropped whiteboard area
             const croppedCanvas = document.createElement('canvas');
             const padding = 10 * scale; // Small padding
             croppedCanvas.width = (wbScreenWidth + padding * 2) * 2; // *2 for scale
             croppedCanvas.height = (wbScreenHeight + padding * 2) * 2;
-            
+
             const ctx = croppedCanvas.getContext('2d');
             if (!ctx) throw new Error('Could not get canvas context');
-            
+
             // Fill with white background
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, croppedCanvas.width, croppedCanvas.height);
-            
+
             // Draw the cropped portion from full canvas
             // Source coordinates (from fullCanvas)
             const srcX = (wbScreenX - padding) * 2;
             const srcY = (wbScreenY - padding) * 2;
             const srcW = (wbScreenWidth + padding * 2) * 2;
             const srcH = (wbScreenHeight + padding * 2) * 2;
-            
+
             ctx.drawImage(fullCanvas, srcX, srcY, srcW, srcH, 0, 0, croppedCanvas.width, croppedCanvas.height);
-            
+
             const outfitScreenshot = croppedCanvas.toDataURL('image/jpeg', 0.9);
 
             // DEBUG: Add screenshot preview node to canvas
@@ -1354,24 +1354,66 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                 </div>
             )}
 
-            {/* Styling Generation Loading Overlay */}
+            {/* Styling Generation Indicator - Non-blocking, appears on canvas */}
             {stylingStep === 'generating' && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="bg-card-dark border border-border-dark rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4">
-                        <div className="flex flex-col items-center gap-6">
-                            <div className="relative">
-                                <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-                                <Sparkles className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                            </div>
-                            <div className="text-center">
-                                <h3 className="text-xl font-bold text-white mb-2">AI Styling in Progress</h3>
-                                <p className="text-text-muted text-sm">Analyzing your wardrobe and generating outfit combinations...</p>
-                            </div>
-                            <div className="flex items-center gap-2 text-primary text-sm">
-                                <span className="w-2 h-2 bg-primary rounded-full animate-bounce" />
-                                <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.1s]" />
-                                <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
-                            </div>
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+                    <style>
+                        {`
+                            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&display=swap');
+                            
+                            @keyframes stylingPulse {
+                                0%, 100% { 
+                                    opacity: 0.8; 
+                                    letter-spacing: 0.3em;
+                                    text-shadow: 0 0 20px rgba(140, 48, 232, 0.3);
+                                }
+                                50% { 
+                                    opacity: 1; 
+                                    letter-spacing: 0.5em;
+                                    text-shadow: 0 0 40px rgba(140, 48, 232, 0.6), 0 0 80px rgba(140, 48, 232, 0.3);
+                                }
+                            }
+                            
+                            @keyframes dotPulse {
+                                0%, 20% { opacity: 0; }
+                                40% { opacity: 1; }
+                                100% { opacity: 1; }
+                            }
+                            
+                            @keyframes fadeSlideIn {
+                                0% { 
+                                    opacity: 0; 
+                                    transform: translateY(20px);
+                                }
+                                100% { 
+                                    opacity: 1; 
+                                    transform: translateY(0);
+                                }
+                            }
+                            
+                            .styling-indicator {
+                                font-family: 'Playfair Display', Georgia, serif;
+                                animation: fadeSlideIn 0.6s ease-out forwards, stylingPulse 2.5s ease-in-out infinite;
+                            }
+                            
+                            .styling-dot:nth-child(1) { animation: dotPulse 1.4s infinite 0s; }
+                            .styling-dot:nth-child(2) { animation: dotPulse 1.4s infinite 0.2s; }
+                            .styling-dot:nth-child(3) { animation: dotPulse 1.4s infinite 0.4s; }
+                        `}
+                    </style>
+                    <div className="flex flex-col items-center gap-3">
+                        <div
+                            className="styling-indicator text-3xl md:text-4xl font-semibold tracking-[0.3em] bg-gradient-to-r from-purple-300 via-primary to-pink-300 bg-clip-text text-transparent select-none"
+                        >
+                            STYLING
+                            <span className="inline-flex ml-1">
+                                <span className="styling-dot">.</span>
+                                <span className="styling-dot">.</span>
+                                <span className="styling-dot">.</span>
+                            </span>
+                        </div>
+                        <div className="text-white/40 text-xs font-light tracking-widest uppercase">
+                            Creating your looks
                         </div>
                     </div>
                 </div>
