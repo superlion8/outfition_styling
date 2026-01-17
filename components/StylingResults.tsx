@@ -341,10 +341,10 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8 items-start">
+      <div className="flex flex-col lg:flex-row gap-8 items-stretch">
 
-        {/* Left Sidebar: Model Card */}
-        <div className="w-full lg:w-[280px] shrink-0 sticky top-24 bg-card-dark rounded-xl border border-border-dark p-2 flex flex-col gap-2 relative group overflow-hidden h-[500px]">
+        {/* Left Sidebar: Model Card - matches whiteboard height with 9:16 aspect ratio */}
+        <div className="shrink-0 sticky top-24 bg-card-dark rounded-xl border border-border-dark p-2 flex flex-col gap-2 relative group overflow-hidden" style={{ aspectRatio: '9/16' }}>
           {/* Header */}
           <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
             <User className="w-3 h-3 text-primary" />
