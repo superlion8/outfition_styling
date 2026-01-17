@@ -462,64 +462,93 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
         setEdges((eds) => [...eds, edge]);
 
         try {
-            // Capture screenshot of the whiteboard WITH all overlapping nodes
-            // Use DOM element position directly for accuracy
+            // Capture screenshot directly of the whiteboard element
+            // This is more accurate than capturing viewport and cropping
             const html2canvas = (await import('html2canvas')).default;
 
             // Find the whiteboard DOM element directly by data-id
-            const wbElement = reactFlowWrapper.current.querySelector(`[data-id="${shootingWhiteboardId}"]`);
+            const wbElement = reactFlowWrapper.current.querySelector(`[data-id="${shootingWhiteboardId}"]`) as HTMLElement;
             if (!wbElement) throw new Error('Whiteboard element not found');
-
-            // Scroll the whiteboard into view and wait for it to be visible
-            wbElement.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'center' });
-            await new Promise(resolve => setTimeout(resolve, 300)); // Wait for scroll and render
-
-            // Get the React Flow viewport element
-            const viewportElement = reactFlowWrapper.current.querySelector('.react-flow__viewport');
-            if (!viewportElement) throw new Error('Viewport element not found');
-
-            // Get whiteboard's bounding rect in screen coordinates (after scroll)
-            const wbRect = wbElement.getBoundingClientRect();
-            const viewportRect = (viewportElement as HTMLElement).getBoundingClientRect();
 
             // Get whiteboard dimensions from style (for debug node sizing)
             const wbWidth = typeof wb.style?.width === 'number' ? wb.style.width : 420;
             const wbHeight = typeof wb.style?.height === 'number' ? wb.style.height : 300;
 
-            // Capture the entire viewport
-            const fullCanvas = await html2canvas(viewportElement as HTMLElement, {
-                backgroundColor: null,
+            // Find all child image nodes that belong to this whiteboard
+            // These are ResizableImage nodes with parentId = whiteboard id
+            const childNodes = nodes.filter(n => n.parentId === shootingWhiteboardId);
+
+            // Create a temporary container to render the whiteboard with its children
+            const tempContainer = document.createElement('div');
+            tempContainer.style.cssText = `
+                position: fixed;
+                left: -9999px;
+                top: 0;
+                width: ${wbWidth}px;
+                height: ${wbHeight}px;
+                background: white;
+                border-radius: 12px;
+                padding: 30px 8px 8px 8px;
+                box-sizing: border-box;
+            `;
+
+            // Add whiteboard label
+            const labelDiv = document.createElement('div');
+            labelDiv.style.cssText = 'position: absolute; top: 8px; left: 12px; color: #9ca3af; font-size: 12px; font-weight: 500;';
+            labelDiv.textContent = (wb.data as { label?: string })?.label || 'Whiteboard';
+            tempContainer.appendChild(labelDiv);
+
+            // Add child images to temp container
+            for (const child of childNodes) {
+                if (child.type === 'resizableImage' && child.data?.imageUrl) {
+                    const imgDiv = document.createElement('div');
+                    const childWidth = typeof child.style?.width === 'number' ? child.style.width : 80;
+                    const childHeight = typeof child.style?.height === 'number' ? child.style.height : 80;
+                    imgDiv.style.cssText = `
+                        position: absolute;
+                        left: ${child.position.x}px;
+                        top: ${child.position.y}px;
+                        width: ${childWidth}px;
+                        height: ${childHeight}px;
+                    `;
+                    const img = document.createElement('img');
+                    img.src = child.data.imageUrl as string;
+                    img.style.cssText = 'width: 100%; height: 100%; object-fit: contain; border-radius: 8px;';
+                    imgDiv.appendChild(img);
+                    tempContainer.appendChild(imgDiv);
+                }
+            }
+
+            // Also copy the typewriter text if present
+            const typewriterEl = wbElement.querySelector('.typewriter-text');
+            if (typewriterEl) {
+                const textDiv = document.createElement('div');
+                textDiv.style.cssText = `
+                    position: absolute; bottom: 8px; left: 10px; right: 10px;
+                    font-family: Georgia, serif; font-size: 11px; font-style: italic;
+                    color: rgba(0,0,0,0.5); line-height: 1.4; max-height: 60px; overflow: hidden;
+                `;
+                textDiv.textContent = typewriterEl.textContent || '';
+                tempContainer.appendChild(textDiv);
+            }
+
+            document.body.appendChild(tempContainer);
+
+            // Wait for images to load
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Capture the temp container directly
+            const canvas = await html2canvas(tempContainer, {
+                backgroundColor: '#ffffff',
                 scale: 2,
                 logging: false,
+                useCORS: true,
             });
 
-            // Calculate the whiteboard position relative to the viewport element
-            const relativeX = wbRect.left - viewportRect.left;
-            const relativeY = wbRect.top - viewportRect.top;
+            // Clean up
+            document.body.removeChild(tempContainer);
 
-            // Create a new canvas for the cropped whiteboard area
-            const croppedCanvas = document.createElement('canvas');
-            const padding = 10;
-            croppedCanvas.width = (wbRect.width + padding * 2) * 2; // *2 for html2canvas scale
-            croppedCanvas.height = (wbRect.height + padding * 2) * 2;
-
-            const ctx = croppedCanvas.getContext('2d');
-            if (!ctx) throw new Error('Could not get canvas context');
-
-            // Fill with white background
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, croppedCanvas.width, croppedCanvas.height);
-
-            // Draw the cropped portion from full canvas
-            // Source coordinates (from fullCanvas, scaled by 2)
-            const srcX = Math.max(0, (relativeX - padding) * 2);
-            const srcY = Math.max(0, (relativeY - padding) * 2);
-            const srcW = (wbRect.width + padding * 2) * 2;
-            const srcH = (wbRect.height + padding * 2) * 2;
-
-            ctx.drawImage(fullCanvas, srcX, srcY, srcW, srcH, 0, 0, croppedCanvas.width, croppedCanvas.height);
-
-            const outfitScreenshot = croppedCanvas.toDataURL('image/jpeg', 0.9);
+            const outfitScreenshot = canvas.toDataURL('image/jpeg', 0.9);
 
             // DEBUG: Add screenshot preview node to canvas - position to the right of generation card
             const genCardWidth = 200; // GenerationCardNode width
@@ -540,9 +569,8 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             console.log('📸 Screenshot captured:', {
                 whiteboardId: shootingWhiteboardId,
                 whiteboardBounds: { x: wb.position.x, y: wb.position.y, w: wbWidth, h: wbHeight },
-                screenBounds: { x: wbRect.left, y: wbRect.top, w: wbRect.width, h: wbRect.height },
-                relativeToViewport: { x: relativeX, y: relativeY },
-                croppedSize: { w: croppedCanvas.width, h: croppedCanvas.height },
+                childNodesCount: childNodes.length,
+                canvasSize: { w: canvas.width, h: canvas.height },
                 dataLength: outfitScreenshot.length,
                 modelImage: selectedShootModel.image,
                 userPrompt: shootPrompt
