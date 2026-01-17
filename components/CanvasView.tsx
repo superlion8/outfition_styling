@@ -175,7 +175,7 @@ const ModelSelectorNode: React.FC<NodeProps<Node<ModelSelectorData>>> = ({ id, d
 };
 
 // ========== Shared Model Preview Card Component ==========
-// Used in both canvas nodes and picker modals for consistent styling
+// Matches the design in StylingResults.tsx for consistency
 interface ModelPreviewCardProps {
     imageUrl: string;
     isSelected?: boolean;
@@ -196,53 +196,51 @@ const ModelPreviewCard: React.FC<ModelPreviewCardProps> = ({
     size = 'medium'
 }) => {
     const sizeClasses = {
-        small: 'w-[100px]',
-        medium: 'w-[180px]',
-        large: 'w-[220px]'
+        small: 'w-[120px]',
+        medium: 'w-[200px]',
+        large: 'w-[280px]'
     };
 
     return (
         <div
-            className={`relative ${sizeClasses[size]} rounded-2xl border-2 overflow-hidden bg-white shadow-xl transition-all cursor-pointer hover:scale-[1.02] ${isSelected
-                ? 'border-amber-400 ring-2 ring-amber-400/30'
-                : 'border-gray-200/50 hover:border-gray-300'
+            className={`relative ${sizeClasses[size]} rounded-xl overflow-hidden transition-all cursor-pointer hover:scale-[1.02] border ${isSelected
+                    ? 'border-amber-400/80 ring-2 ring-amber-400/30'
+                    : 'border-white/10 hover:border-white/20'
                 }`}
             onClick={onClick}
         >
-            {/* Floating "Model Preview" badge */}
-            {showBadge && (
-                <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 px-3 py-1 bg-gray-700/85 backdrop-blur-sm rounded-full flex items-center gap-1.5 shadow-md">
-                    <svg className="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    <span className="text-white text-[10px] font-medium">Model Preview</span>
-                </div>
-            )}
+            {/* Background Image */}
+            <div
+                className="aspect-[3/4] bg-cover bg-center bg-no-repeat relative"
+                style={{ backgroundImage: `url(${imageUrl})` }}
+            >
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-            {/* Model Image */}
-            <div className="aspect-[3/4]">
-                <img
-                    src={imageUrl}
-                    alt="Model"
-                    className="w-full h-full object-cover"
-                />
-            </div>
+                {/* Floating "Model Preview" badge */}
+                {showBadge && (
+                    <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/10">
+                        <svg className="w-3 h-3 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span className="text-white text-[10px] font-bold tracking-wide">Model Preview</span>
+                    </div>
+                )}
 
-            {/* Customize Avatar Button */}
-            {showCustomizeButton && onCustomize && (
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-[85%]">
+                {/* Customize Avatar Button */}
+                {showCustomizeButton && onCustomize && (
                     <button
                         onClick={(e) => { e.stopPropagation(); onCustomize(); }}
-                        className="w-full py-2 bg-gray-100/95 hover:bg-white border border-gray-200 rounded-xl text-gray-600 text-xs font-medium transition-all shadow-md flex items-center justify-center gap-1.5"
+                        className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg text-white text-[11px] font-bold transition-all flex items-center gap-1.5 whitespace-nowrap"
                     >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                         <span>Customize Avatar</span>
                     </button>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };
