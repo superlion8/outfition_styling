@@ -22,9 +22,9 @@ export const ModelPreviewCard: React.FC<ModelPreviewCardProps> = ({
     size = 'medium'
 }) => {
     const sizeClasses = {
-        small: 'w-[140px]',
-        medium: 'w-[200px]',
-        large: 'w-[280px]'
+        small: 'w-[70px]',
+        medium: 'w-[100px]',
+        large: 'w-[140px]'
     };
 
     return (

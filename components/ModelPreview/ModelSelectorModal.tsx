@@ -100,7 +100,7 @@ export const ModelSelectorModal: React.FC<ModelSelectorModalProps> = ({
 
                 {/* Grid */}
                 <div className="flex-1 overflow-y-auto min-h-0 pr-2 custom-scrollbar">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4 pb-6">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-4 pb-6">
                         {filteredModels.map((model) => (
                             <ModelPreviewCard
                                 key={model._id}
