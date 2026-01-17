@@ -209,9 +209,9 @@ const ModelPreviewCard: React.FC<ModelPreviewCardProps> = ({
                 }`}
             onClick={onClick}
         >
-            {/* Background Image */}
+            {/* Background Image - Absolute 9:16 aspect ratio */}
             <div
-                className="aspect-[3/4] bg-cover bg-center bg-no-repeat relative"
+                className="aspect-[9/16] bg-cover bg-center bg-no-repeat relative"
                 style={{ backgroundImage: `url(${imageUrl})` }}
             >
                 {/* Gradient overlay */}
