@@ -342,17 +342,17 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8">
+      <div className="flex flex-col lg:flex-row gap-8">
 
         {/* Left Content - Grid Table */}
-        <div className="min-w-0">
+        <div className="flex-1 min-w-0">
           <div
             ref={scrollContainerRef}
             onMouseDown={handleMouseDown}
             onMouseLeave={handleMouseLeave}
             onMouseUp={handleMouseUp}
             onMouseMove={handleMouseMove}
-            className="bg-card-dark rounded-xl border border-border-dark p-4 md:p-8 overflow-x-auto relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing h-full"
+            className="bg-card-dark rounded-xl border border-border-dark p-4 md:p-8 overflow-x-auto relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing min-h-[550px]"
           >
             <div className="min-w-full">
               {/* Header Row */}
@@ -510,11 +510,11 @@ export const StylingResults: React.FC<StylingResultsProps> = ({
           </div>
         </div>
 
-        {/* Model Preview Card - 使用 grid 自动等高 */}
-        <div className="hidden lg:block sticky top-24 h-full">
+        {/* Model Preview Card - 固定高度550px，宽度9:16比例 */}
+        <div className="hidden lg:block sticky top-24">
           <div 
-            className="h-full bg-card-dark rounded-xl border border-amber-400/80 ring-2 ring-amber-400/30 overflow-hidden relative"
-            style={{ aspectRatio: '9/16' }}
+            className="bg-card-dark rounded-xl border border-amber-400/80 ring-2 ring-amber-400/30 overflow-hidden relative"
+            style={{ height: 550, width: 550 * 9 / 16 }}
           >
             {/* Model Image */}
             {currentModel.image ? (
