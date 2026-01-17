@@ -1428,18 +1428,18 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                             </div>
                         </div>
 
-                        {/* Model Grid - Uses shared ModelPreviewCard */}
+                        {/* Model Grid - Uses shared ModelPreviewCard (same config as canvas) */}
                         <div className="flex-1 overflow-y-auto">
-                            <div className="grid grid-cols-5 gap-3">
+                            <div className="grid grid-cols-4 gap-4">
                                 {filteredModels.map((model) => (
                                     <ModelPreviewCard
                                         key={model.model_id}
                                         imageUrl={model.image}
                                         isSelected={selectedShootModel?.id === model.model_id}
-                                        showBadge={false}
+                                        showBadge={true}
                                         showCustomizeButton={false}
                                         onClick={() => handleShootModelSelect(model)}
-                                        size="small"
+                                        size="medium"
                                     />
                                 ))}
                             </div>
