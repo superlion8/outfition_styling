@@ -411,19 +411,33 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
     // Handle confirm shoot - show prompt input modal
     useEffect(() => {
         const handleConfirmShoot = (e: CustomEvent<{ whiteboardId: string }>) => {
-            // Set default model if none was explicitly selected
-            if (!selectedShootModel) {
+            const { whiteboardId } = e.detail;
+
+            // Set the current shooting whiteboard ID
+            setShootingWhiteboardId(whiteboardId);
+
+            // Find the model card for this whiteboard and get its model
+            const modelCardId = `modelcard-${whiteboardId}`;
+            const modelCardNode = nodes.find(n => n.id === modelCardId);
+            if (modelCardNode?.data?.modelImage) {
+                setSelectedShootModel({
+                    id: (modelCardNode.data as { modelId?: string }).modelId || '',
+                    image: modelCardNode.data.modelImage as string
+                });
+            } else {
+                // Set default model if none was explicitly selected
                 const defaultModel = modelsData[0];
                 if (defaultModel) {
                     setSelectedShootModel({ id: defaultModel.model_id, image: defaultModel.image });
                 }
             }
+
             setShootStep('inputPrompt');
         };
 
         window.addEventListener('confirmShoot', handleConfirmShoot as EventListener);
         return () => window.removeEventListener('confirmShoot', handleConfirmShoot as EventListener);
-    }, [selectedShootModel]);
+    }, [nodes]);
 
     // Execute the actual generation
     const executeShoot = useCallback(async () => {
