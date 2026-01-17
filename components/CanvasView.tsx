@@ -1256,6 +1256,29 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                     </div>
                 </div>
             )}
+
+            {/* Styling Generation Loading Overlay */}
+            {stylingStep === 'generating' && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="bg-card-dark border border-border-dark rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4">
+                        <div className="flex flex-col items-center gap-6">
+                            <div className="relative">
+                                <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                                <Sparkles className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                            </div>
+                            <div className="text-center">
+                                <h3 className="text-xl font-bold text-white mb-2">AI Styling in Progress</h3>
+                                <p className="text-text-muted text-sm">Analyzing your wardrobe and generating outfit combinations...</p>
+                            </div>
+                            <div className="flex items-center gap-2 text-primary text-sm">
+                                <span className="w-2 h-2 bg-primary rounded-full animate-bounce" />
+                                <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.1s]" />
+                                <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Shoot Prompt Input Modal */}
             {shootStep === 'inputPrompt' && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
