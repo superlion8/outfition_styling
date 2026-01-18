@@ -89,18 +89,16 @@ const WhiteboardNode: React.FC<NodeProps<Node<WhiteboardData>>> = ({ id, data, s
             <div className="absolute top-2 left-3 text-gray-400 text-xs font-medium">
                 {data.label || 'Whiteboard'}
             </div>
-            {/* Shoot Button - only show if no model card yet */}
-            {!data.hasModelCard && (
-                <button
-                    onClick={handleShootClick}
-                    className="absolute top-2 right-2 group"
-                >
-                    <div className="px-3 py-1.5 bg-black/80 hover:bg-black text-white text-[10px] font-medium tracking-wider uppercase rounded-full border border-white/20 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
-                        <span>Shoot</span>
-                    </div>
-                </button>
-            )}
+            {/* Shoot Button - always visible, can add multiple models */}
+            <button
+                onClick={handleShootClick}
+                className="absolute top-2 right-2 group"
+            >
+                <div className="px-3 py-1.5 bg-black/80 hover:bg-black text-white text-[10px] font-medium tracking-wider uppercase rounded-full border border-white/20 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                    <span>Shoot</span>
+                </div>
+            </button>
         </div>
     );
 };
@@ -344,16 +342,25 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
             const wb = nodes.find(n => n.id === whiteboardId);
             if (!wb) return;
 
+            const whiteboardWidth = typeof wb.style?.width === 'number' ? wb.style.width : 420;
             const whiteboardHeight = typeof wb.style?.height === 'number' ? wb.style.height : 300;
 
-            // Create ModelCard node to the right of whiteboard
-            const modelCardId = `modelcard-${whiteboardId}`;
+            // Count existing model cards for this whiteboard to determine vertical offset
+            const existingModelCards = nodes.filter(n =>
+                n.type === 'modelNode' &&
+                (n.data as ModelNodeData)?.whiteboardId === whiteboardId
+            );
+            const modelCardIndex = existingModelCards.length;
+            const verticalOffset = modelCardIndex * (whiteboardHeight + 30); // Stack vertically
+
+            // Create ModelCard node with unique ID using timestamp
+            const modelCardId = `modelcard-${whiteboardId}-${Date.now()}`;
             const modelCardNode: Node<ModelNodeData> = {
                 id: modelCardId,
                 type: 'modelNode',
                 position: {
-                    x: wb.position.x + (typeof wb.style?.width === 'number' ? wb.style.width : 420) + 80,
-                    y: wb.position.y,
+                    x: wb.position.x + whiteboardWidth + 80,
+                    y: wb.position.y + verticalOffset,
                 },
                 data: {
                     whiteboardId,
@@ -366,25 +373,16 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
             // Create white dashed edge from whiteboard to model card
             const edge: Edge = {
-                id: `shoot-edge-${whiteboardId}`,
+                id: `shoot-edge-${modelCardId}`,
                 source: whiteboardId,
                 target: modelCardId,
                 style: { strokeDasharray: '8,4', stroke: '#ffffff', strokeWidth: 2 },
                 animated: false,
             };
 
-            // Update whiteboard to show hasModelCard and add modelCard node
-            setNodes((nds) => [
-                ...nds.map(n =>
-                    n.id === whiteboardId
-                        ? { ...n, data: { ...n.data, hasModelCard: true } }
-                        : n
-                ),
-                modelCardNode
-            ]);
+            // Add modelCard node (don't modify whiteboard - Shoot button stays visible)
+            setNodes((nds) => [...nds, modelCardNode]);
             setEdges((eds) => [...eds, edge]);
-            setShootingWhiteboardId(whiteboardId);
-            setShootStep('selectModel');
         };
 
         window.addEventListener('startShoot', handleStartShoot as EventListener);
