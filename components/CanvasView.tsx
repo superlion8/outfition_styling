@@ -306,6 +306,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
     type ShootStep = 'idle' | 'selectModel' | 'inputPrompt' | 'generating';
     const [shootStep, setShootStep] = useState<ShootStep>('idle');
     const [shootingWhiteboardId, setShootingWhiteboardId] = useState<string | null>(null);
+    const [shootingModelNodeId, setShootingModelNodeId] = useState<string | null>(null);
     const [selectedShootModel, setSelectedShootModel] = useState<{ id: string; image: string } | null>(null);
     const [shootPrompt, setShootPrompt] = useState('');
 
@@ -421,15 +422,15 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
     // Handle confirm shoot - show prompt input modal
     useEffect(() => {
-        const handleConfirmShoot = (e: CustomEvent<{ whiteboardId: string }>) => {
-            const { whiteboardId } = e.detail;
+        const handleConfirmShoot = (e: CustomEvent<{ whiteboardId: string; modelNodeId: string }>) => {
+            const { whiteboardId, modelNodeId } = e.detail;
 
-            // Set the current shooting whiteboard ID
+            // Set the current shooting whiteboard and model node IDs
             setShootingWhiteboardId(whiteboardId);
+            setShootingModelNodeId(modelNodeId);
 
-            // Find the model card for this whiteboard and get its model
-            const modelCardId = `modelcard-${whiteboardId}`;
-            const modelCardNode = nodes.find(n => n.id === modelCardId);
+            // Find the model card and get its model
+            const modelCardNode = nodes.find(n => n.id === modelNodeId);
             if (modelCardNode?.data?.modelImage) {
                 setSelectedShootModel({
                     id: (modelCardNode.data as { modelId?: string }).modelId || '',
@@ -452,18 +453,17 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
     // Execute the actual generation
     const executeShoot = useCallback(async () => {
-        if (!shootingWhiteboardId || !selectedShootModel || !reactFlowWrapper.current) return;
+        if (!shootingWhiteboardId || !shootingModelNodeId || !selectedShootModel || !reactFlowWrapper.current) return;
 
         setShootStep('generating');
 
         const wb = nodes.find(n => n.id === shootingWhiteboardId);
-        const modelCardId = `modelcard-${shootingWhiteboardId}`;
-        const modelCard = nodes.find(n => n.id === modelCardId);
+        const modelCard = nodes.find(n => n.id === shootingModelNodeId);
 
         if (!wb || !modelCard) return;
 
         // Create GenerationCard node
-        const genCardId = `gencard-${shootingWhiteboardId}`;
+        const genCardId = `gencard-${shootingModelNodeId}-${Date.now()}`;
         const genCardNode: Node = {
             id: genCardId,
             type: 'generationCard',
@@ -476,8 +476,8 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
         // Edge from ModelCard to GenerationCard (white dashed)
         const edge: Edge = {
-            id: `gen-edge-${shootingWhiteboardId}`,
-            source: modelCardId,
+            id: `gen-edge-${genCardId}`,
+            source: shootingModelNodeId,
             target: genCardId,
             style: { strokeDasharray: '8,4', stroke: '#ffffff', strokeWidth: 2 },
             animated: false,
@@ -644,7 +644,7 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
 
             setShootStep('idle');
         }
-    }, [shootingWhiteboardId, selectedShootModel, shootPrompt, nodes, setNodes, setEdges]);
+    }, [shootingWhiteboardId, shootingModelNodeId, selectedShootModel, shootPrompt, nodes, setNodes, setEdges]);
 
     // Handle model selection
     const handleSelectModel = useCallback((model: Model) => {
