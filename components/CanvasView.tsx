@@ -895,7 +895,6 @@ const CanvasViewInner: React.FC<CanvasViewProps> = ({ wardrobeItems, onBack }) =
                     },
                     data: { label: `Look ${i + 1}` },
                     style: { width: whiteboardWidth, height: whiteboardHeight },
-                    draggable: false, // Lock during generation
                 });
             }
 
